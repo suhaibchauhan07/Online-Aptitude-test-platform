@@ -1,0 +1,21 @@
+# Query: fileId
+# ContextLines: 1
+
+5 results - 2 files
+
+backend\controllers\testController.js:
+  192          
+  193:         const { fileId, testId } = req.body;
+  194          const facultyId = req.user.id;
+
+  205          // Debug file lookup
+  206:         console.log('Looking up file:', fileId);
+  207:         const uploadedFile = await UploadedFile.findById(fileId);
+  208          if (!uploadedFile) {
+  209:             console.log('File not found:', fileId);
+  210              return res.status(404).json({ message: 'File not found' });
+
+backend\scripts\ensureUploadsDir.js:
+  32    body: JSON.stringify({
+  33:     fileId: '6816692637',
+  34      testId: '681671ab0ddaa27097f378af'
