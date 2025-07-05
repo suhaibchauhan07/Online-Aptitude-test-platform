@@ -197,7 +197,7 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                 console.log('Questions uploaded successfully:', questionsResult);
             }
 
-            window.alert('congratulations! Test and questions created successfully!');
+            window.alert('congratulations! Test created successfully!');
             onTestCreated();
             handleClose();
         } catch (error) {
@@ -307,31 +307,8 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                 )}
 
                 {step === 2 && questions.length > 0 && (
-                  <Card className="p-6 mb-4">
-                        <h3 className="text-lg font-semibold mb-4">Preview Questions</h3>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Question</TableHead>
-                                    <TableHead>Options</TableHead>
-                                    <TableHead>Correct Answer</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Marks</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {questions.map((q, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell className="max-w-xs truncate">{q.question}</TableCell>
-                                        <TableCell className="max-w-xs truncate">{q.options.join(', ')}</TableCell>
-                                        <TableCell>{q.correctAnswer}</TableCell>
-                                        <TableCell>{q.type}</TableCell>
-                                        <TableCell>{q.marks}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Card>
+                  // Question preview table removed as per user request
+                  <></>
                 )}
 
                 <div className="flex justify-end space-x-4 mt-6">

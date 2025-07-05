@@ -34,6 +34,11 @@ const testSchema = new mongoose.Schema({
         type: String, 
         enum: ['draft', 'published', 'archived'],
         default: 'draft'
+    },
+    instructions: {
+        type: String,
+        default: '',
+        trim: true
     }
 }, { 
     timestamps: true,
@@ -43,7 +48,7 @@ const testSchema = new mongoose.Schema({
 
 // Virtual for questions
 testSchema.virtual('questions', {
-    ref: 'TestQuestion',
+    ref: 'TestQuestions',
     localField: '_id',
     foreignField: 'testId'
 });

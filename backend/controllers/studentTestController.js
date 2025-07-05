@@ -9,7 +9,7 @@ exports.getAvailableTests = async (req, res) => {
     const tests = await Test.find({
       startTime: { $lte: now },
       endTime: { $gte: now }
-    }).select('testName instructions startTime duration totalMarks');
+    }).select('title description instructions startTime duration totalMarks');
 
     res.status(200).json({
       status: 'success',

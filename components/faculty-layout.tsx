@@ -3,7 +3,7 @@
 import type React from "react"
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { BookOpen, Home, Users, FileText, BarChart2, Settings, User, LogOut, Plus } from "lucide-react"
+import { BookOpen, Home, Users, FileText, BarChart2, Settings, User, LogOut, Plus, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import CreateTestModal from "@/app/components/CreateTestModal"
@@ -65,19 +65,18 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-primary-blue" />
-            <h1 className="text-xl font-semibold text-gray-800">JMIT Aptitude Test</h1>
+            <GraduationCap className="h-7 w-7 text-blue-700 drop-shadow" />
+            <span className="font-semibold text-xl tracking-wide">
+              <span className="text-green-600">JMIT</span>
+              <span className="text-blue-500"> Online Aptitude Test System</span>
+            </span>
           </div>
 
           <div className="flex items-center gap-4">
             <Avatar>
               <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Faculty" />
-              <AvatarFallback>{profile?.name?.charAt(0) || 'F'}</AvatarFallback>
+              <AvatarFallback></AvatarFallback>
             </Avatar>
-            <div className="hidden md:block">
-              <p className="text-sm font-medium">{profile?.name || 'Loading...'}</p>
-              <p className="text-xs text-gray-500">{profile?.department || 'Loading...'}</p>
-            </div>
           </div>
         </div>
       </header>
@@ -85,9 +84,9 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex">
         {!hideSidebar && (
-          <aside className="w-20 md:w-72 bg-transparent shrink-0 flex flex-col items-center py-6">
+          <aside className="w-20 md:w-72 bg-transparent shrink-0 flex flex-col items-center py-6 animate-fade-in">
             <nav className="w-full flex flex-col h-full">
-              <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col gap-1 w-full">
+              <div className="bg-white/80 backdrop-blur shadow-2xl rounded-2xl border border-blue-100 p-4 flex flex-col gap-1 w-full transition-all">
                 <div className="space-y-1">
                   <NavItem href="/faculty/dashboard" icon={<Home className="h-5 w-5" />} label="Dashboard" />
                   <NavItem href="/faculty/profile" icon={<User className="h-5 w-5" />} label="Profile" />
@@ -109,7 +108,7 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
                 <Link href="/">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl"
+                    className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl hover:scale-105 hover:shadow transition-all"
                   >
                     <LogOut className="h-5 w-5 mr-2" />
                     <span className="hidden md:inline">Logout</span>

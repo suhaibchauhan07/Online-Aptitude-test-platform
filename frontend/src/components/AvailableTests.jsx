@@ -45,30 +45,69 @@ const AvailableTests = () => {
   }
 
   if (testStarted) {
-    // Remove the placeholder rendering
     return null;
   }
 
+  if (!hasQuestions) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-white">
+        <div className="bg-white/90 p-8 rounded-2xl shadow-2xl border border-blue-100 w-full max-w-md flex flex-col items-center animate-fade-in">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/><path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span className="text-lg font-semibold text-[#22223b]">Sorry! Test is not available right now.</span>
+          </div>
+          <button
+            onClick={() => window.history.back()}
+            className="mt-2 bg-[#0074b7] hover:bg-[#005fa3] text-white font-bold py-2 px-8 rounded-lg shadow-lg focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-lg"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Example instructions (replace with your real data as needed)
+  const instructions = [
+    "Total Questions: 50",
+    "Type of Questions: Multiple Choice Questions (MCQ) with four options each. Only one option is correct.",
+    "Duration: 60 minutes.",
+    "Marking Scheme: Each correct answer carries 1 mark. No negative marking for incorrect answers."
+  ];
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center">Aptitude Test</h2>
-        {hasQuestions ? (
-          <div className="text-center">
-            <p className="mb-4 text-gray-600">Test questions are available. Click below to start.</p>
-            <button
-              onClick={handleStartTest}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Start Test
-            </button>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-white">
+      <div className="bg-white/90 p-10 rounded-2xl shadow-2xl border border-blue-100 w-full max-w-xl hover:scale-[1.02] hover:shadow-blue-200 transition-all animate-fade-in">
+        <h2 className="text-3xl font-bold mb-8 text-center text-[#22223b] drop-shadow">Available Tests</h2>
+        <div className="mb-8">
+          <div className="font-bold text-lg mb-2 text-left text-[#22223b]">Aptitude Test</div>
+          <div className="mb-2 text-blue-700 font-semibold flex items-center gap-2">
+            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/><path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Instructions for Students
           </div>
-        ) : (
-          <div className="text-center">
-            <p className="text-red-600 mb-4">No test questions available at the moment.</p>
-            <p className="text-gray-600">Please check back later.</p>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-blue-900 shadow-md text-sm text-left space-y-2">
+            {instructions.map((line, idx) => (
+              <div key={idx} className="flex items-start gap-2">
+                <span className="text-blue-500 mt-0.5">•</span>
+                <span>{line}</span>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="text-gray-500 text-sm">
+            Duration: 30 min | Total Marks: 50
+            <br />
+            Starts: 7/5/2025, 8:53:00 PM
+          </div>
+          <button
+            onClick={handleStartTest}
+            className="bg-[#0074b7] hover:bg-[#005fa3] text-white font-bold py-3 px-8 rounded-lg shadow-lg focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-lg relative overflow-hidden group"
+          >
+            Start Test
+            <span className="absolute inset-0 bg-white/40 rounded-full pointer-events-none scale-0 group-active:scale-100 transition-transform duration-500"></span>
+          </button>
+        </div>
       </div>
     </div>
   );

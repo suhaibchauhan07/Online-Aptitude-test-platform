@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge as UIBadge } from "@/components/ui/badge"
@@ -135,7 +135,7 @@ export default function FacultyDashboard() {
             {activeTests.length > 0 ? (
               <div className="space-y-4">
                 {activeTests.map((test) => (
-                  <div key={test.id} className="border rounded-lg p-4 hover:shadow-soft transition-shadow">
+                  <div key={test.id} className="bg-white/60 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-5 hover:scale-[1.03] hover:shadow-blue-200 transition-all duration-300">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-medium">{test.title}</h3>
                       <UIBadge className={test.status === "active" ? "bg-green-600" : "bg-primary-blue"}>
@@ -162,7 +162,7 @@ export default function FacultyDashboard() {
                           {test.studentsAttempted}/{test.totalStudents}
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                      <div className="w-full bg-gradient-to-r from-blue-400 to-blue-700 h-2.5 rounded-full shadow-lg transition-all duration-1000">
                         <div
                           className="bg-primary-blue h-2.5 rounded-full"
                           style={{ width: `${(test.studentsAttempted / test.totalStudents) * 100}%` }}
@@ -201,7 +201,7 @@ export default function FacultyDashboard() {
             {recentResults.length > 0 ? (
               <div className="space-y-4">
                 {recentResults.map((result) => (
-                  <div key={result.id} className="border rounded-lg p-4 hover:shadow-soft transition-shadow">
+                  <div key={result.id} className="bg-white/60 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-5 hover:scale-[1.03] hover:shadow-blue-200 transition-all duration-300">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-medium">{result.title}</h3>
                       <span className="text-sm text-gray-500">{result.date}</span>
@@ -224,7 +224,7 @@ export default function FacultyDashboard() {
                           {result.studentsAttempted}/{result.totalStudents}
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                      <div className="w-full bg-gradient-to-r from-green-400 to-green-600 h-2.5 rounded-full shadow-lg transition-all duration-1000">
                         <div
                           className="bg-green-600 h-2.5 rounded-full"
                           style={{ width: `${(result.studentsAttempted / result.totalStudents) * 100}%` }}
@@ -280,21 +280,49 @@ export default function FacultyDashboard() {
   )
 }
 
+// AnimatedCounter: simple animated number counter for stats
+function AnimatedCounter({ end, duration = 1.2, suffix = "" }: { end: number, duration?: number, suffix?: string }) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const increment = end / (duration * 60);
+    let frame: number;
+    function animate() {
+      start += increment;
+      if (start < end) {
+        setCount(Math.floor(start));
+        frame = requestAnimationFrame(animate);
+      } else {
+        setCount(end);
+      }
+    }
+    animate();
+    return () => cancelAnimationFrame(frame);
+  }, [end, duration]);
+  return <span>{count}{suffix}</span>;
+}
+
 function StatsCard({ title, value, description, icon }: {
   title: string
   value: string
   description: string
   icon: React.ReactNode
 }) {
+  // Extract number and suffix for animation
+  const match = value.match(/(\d+)(\D*)/);
+  const num = match ? parseInt(match[1]) : 0;
+  const suffix = match ? match[2] : "";
   return (
-    <Card>
+    <Card className="bg-white/60 backdrop-blur-md shadow-2xl rounded-3xl border border-blue-100 hover:scale-105 hover:shadow-blue-200 transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon}
+        <CardTitle className="text-sm font-medium text-blue-900 drop-shadow">{title}</CardTitle>
+        <div className="transition-transform duration-300 group-hover:scale-110 animate-bounce-slow">{icon}</div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-gray-500">{description}</p>
+        <div className="text-3xl font-extrabold text-blue-900 mb-1">
+          <AnimatedCounter end={num} suffix={suffix} />
+        </div>
+        <p className="text-xs text-blue-700 font-medium">{description}</p>
       </CardContent>
     </Card>
   )

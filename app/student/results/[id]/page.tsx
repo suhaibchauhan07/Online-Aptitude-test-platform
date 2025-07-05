@@ -1,32 +1,40 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type React from "react"
 import { StudentLayout } from "@/components/student-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, XCircle, AlertTriangle, Clock } from "lucide-react"
-import { use } from 'react'
 
-export default function TestResult({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  // Sample result data
-  const result = {
-    id: id,
-    testName: "Programming Basics",
-    date: "April 25, 2024",
-    timeStarted: "10:15 AM",
-    timeCompleted: "11:10 AM",
-    duration: "55 minutes",
-    score: 85,
-    totalQuestions: 30,
-    correctAnswers: 26,
-    incorrectAnswers: 4,
-    status: "passed",
-    violations: [{ type: "Fullscreen Exit", count: 1, time: "10:25 AM" }],
-    sectionScores: [
-      { name: "Basic Concepts", score: 90, total: 10 },
-      { name: "Data Types", score: 80, total: 10 },
-      { name: "Control Structures", score: 85, total: 10 },
-    ],
+export default function TestResult({ params }: { params: { id: string } }) {
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchResult = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/student/tests/${params.id}/result`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (!response.ok) throw new Error('Failed to fetch result');
+        const data = await response.json();
+        setResult(data);
+      } catch (err) {
+        setError('Failed to fetch result');
+      }
+    };
+    fetchResult();
+  }, [params.id]);
+
+  if (error) {
+    return <div className="flex justify-center items-center min-h-screen"><span>{error}</span></div>;
+  }
+  if (!result) {
+    return <div className="flex justify-center items-center min-h-screen"><span>Loading...</span></div>;
   }
 
   return (
@@ -84,7 +92,7 @@ export default function TestResult({ params }: { params: Promise<{ id: string }>
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Section Performance</h3>
                     <div className="space-y-4">
-                      {result.sectionScores.map((section, index) => (
+                      {result.sectionScores.map((section: any, index: number  ) => (
                         <div key={index}>
                           <div className="flex justify-between items-center mb-1">
                             <span className="font-medium">{section.name}</span>
@@ -169,7 +177,7 @@ export default function TestResult({ params }: { params: Promise<{ id: string }>
                     </div>
 
                     <ul className="space-y-2">
-                      {result.violations.map((violation, index) => (
+                      {result.violations.map((violation: any, index: number) => (
                         <li key={index} className="text-sm border-l-2 border-amber-500 pl-3 py-1">
                           <span className="font-medium">{violation.type}</span> at {violation.time}
                           <p className="text-gray-500">Count: {violation.count}</p>

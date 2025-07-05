@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertTriangle, Clock, AlertCircle } from "lucide-react"
+import { AlertTriangle, Clock, AlertCircle, GraduationCap } from "lucide-react"
 import Link from "next/link"
 
 interface Question {
@@ -27,6 +27,7 @@ interface Test {
   id: string
   title: string
   questions: Question[]
+  duration: number
 }
 
 export default function TestPage({ params }: { params: Promise<{ id: string }> }) {
@@ -83,6 +84,13 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
     fetchTestData()
   }, [id])
+
+  // Set timer based on test duration
+  useEffect(() => {
+    if (test && test.duration) {
+      setTimeLeft(test.duration * 60)
+    }
+  }, [test])
 
   // Format time left as MM:SS
   const formatTime = (seconds: number) => {
@@ -216,10 +224,10 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
         body: JSON.stringify({
           answers: Object.entries(answers).map(([questionId, answer]) => ({
             questionId,
-            answer
+            selectedAnswer: answer
           })),
           violations,
-          timeTaken: 3600 - timeLeft // Convert remaining time to time taken
+          timeTaken: 3600 - timeLeft // or your timer logic
         })
       })
 
@@ -227,6 +235,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
         throw new Error('Failed to submit test')
       }
 
+      // Redirect to results page
       router.push(`/student/results/${id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit test')
@@ -265,49 +274,32 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
   const question = test.questions[currentQuestion]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with timer */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="container flex h-16 items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-800">{test.title}</h1>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center bg-gray-100 px-3 py-1.5 rounded-full">
-              <Clock className="h-4 w-4 mr-2 text-primary-blue" />
-              <span className="font-medium">{formatTime(timeLeft)}</span>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white py-6">
+      {/* Main Header */}
+      <header className="bg-white/80 shadow-lg rounded-b-2xl border-b border-blue-200 sticky top-0 z-20 flex items-center justify-between px-8 py-4 mb-6">
+        <div className="flex items-center gap-2">
+          <GraduationCap className="h-9 w-9 text-blue-700 drop-shadow" />
+          <h1 className="font-semibold text-2xl md:text-3xl tracking-wide">
+            <span className="text-green-600">JMIT</span>
+            <span className="text-blue-500"> Online Aptitude Test System</span>
+          </h1>
+        </div>
+        <div className="flex items-center gap-3 bg-blue-100 px-5 py-2 rounded-full shadow-md border border-blue-200">
+          <Clock className="h-5 w-5 text-blue-600 mr-2" />
+          <span className="font-bold text-lg text-blue-700 tracking-wider">{formatTime(timeLeft)}</span>
         </div>
       </header>
-
-      {/* Warning for fullscreen exit */}
-      {showWarning && (
-        <div className="fixed top-16 inset-x-0 z-50">
-          <Alert variant="destructive" className="rounded-none">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>
-                You have exited fullscreen mode. This violation has been recorded. Please return to fullscreen mode.
-              </span>
-              <Button onClick={() => document.documentElement.requestFullscreen()} size="sm" className="ml-2">
-                Return to Fullscreen
-              </Button>
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
-
-      <div className="flex h-[calc(100vh-4rem)]">
+      <div className="flex h-[calc(100vh-7rem)]">
         {/* Question navigation sidebar */}
-        <aside className="w-20 md:w-64 bg-white border-r border-gray-200 overflow-y-auto p-4">
-          <div className="mb-4">
-            <h2 className="text-sm font-medium text-gray-500 mb-2">Question Navigator</h2>
+        <aside className="w-20 md:w-64 bg-white/90 border-r border-blue-100 shadow-lg rounded-2xl m-2 p-4 flex flex-col items-center">
+          <div className="mb-4 w-full">
+            <h2 className="text-sm font-semibold text-blue-600 mb-2 text-center">Question Navigator</h2>
             <div className="grid grid-cols-5 gap-2">
               {test.questions.map((q, index) => (
                 <button
                   key={q.id}
-                  className={`h-10 w-10 flex items-center justify-center rounded border font-medium ${getQuestionStatusClass(q.id)} ${
-                    currentQuestion === index ? "ring-2 ring-primary-blue" : ""
+                  className={`h-10 w-10 flex items-center justify-center rounded-xl border-2 font-semibold shadow-md transition-all duration-150 hover:scale-105 hover:border-blue-400 ${getQuestionStatusClass(q.id)} ${
+                    currentQuestion === index ? "ring-2 ring-blue-400 scale-110" : ""
                   }`}
                   onClick={() => setCurrentQuestion(index)}
                 >
@@ -316,31 +308,27 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
               ))}
             </div>
           </div>
-
-          <div className="space-y-2 mt-6">
+          <div className="space-y-2 mt-6 w-full">
             <div className="flex items-center">
               <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
-              <span className="text-sm">Answered</span>
+              <span className="text-xs">Answered</span>
             </div>
             <div className="flex items-center">
               <div className="h-3 w-3 rounded-full bg-amber-500 mr-2"></div>
-              <span className="text-sm">Marked for Review</span>
+              <span className="text-xs">Marked for Review</span>
             </div>
             <div className="flex items-center">
               <div className="h-3 w-3 rounded-full bg-gray-300 mr-2"></div>
-              <span className="text-sm">Not Answered</span>
+              <span className="text-xs">Not Answered</span>
             </div>
           </div>
         </aside>
-
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">
-                  Question {currentQuestion + 1} of {test.questions.length}
-                </h2>
+        <main className="flex-1 overflow-y-auto p-8">
+          <Card className="mb-8 shadow-2xl rounded-2xl border-blue-100 bg-white/95">
+            <CardContent className="p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-blue-800 drop-shadow">Question {currentQuestion + 1} of {test.questions.length}</h2>
                 <div>
                   {markedForReview.includes(question.id) ? (
                     <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-500">
@@ -349,32 +337,29 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                   ) : null}
                 </div>
               </div>
-
-              <div className="mb-6">
-                <p className="text-lg">{question.text}</p>
+              <div className="mb-8">
+                <p className="text-lg font-medium text-gray-800">{question.text}</p>
               </div>
-
               {/* Question type: MCQ */}
               {question.type === "mcq" && question.options && (
                 <RadioGroup
                   value={answers[question.id]?.toString() || ""}
                   onValueChange={(value) => handleAnswerChange(question.id, value)}
-                  className="space-y-3"
+                  className="space-y-4"
                 >
                   {question.options.map((option, idx) => (
-                    <div key={idx} className="flex items-center space-x-2">
+                    <div key={idx} className="flex items-center space-x-3">
                       <RadioGroupItem value={option} id={`option-${question.id}-${idx}`} />
                       <Label htmlFor={`option-${question.id}-${idx}`}>{option}</Label>
                     </div>
                   ))}
                 </RadioGroup>
               )}
-
               {/* Question type: MSQ */}
               {question.type === "msq" && question.options && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {question.options.map((option, idx) => (
-                    <div key={idx} className="flex items-center space-x-2">
+                    <div key={idx} className="flex items-center space-x-3">
                       <Checkbox
                         id={`msq-option-${question.id}-${idx}`}
                         checked={(answers[question.id] || []).includes(option)}
@@ -385,7 +370,6 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                   ))}
                 </div>
               )}
-
               {/* Question type: NAT */}
               {question.type === "nat" && (
                 <div className="space-y-2">
@@ -401,7 +385,6 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
               )}
             </CardContent>
           </Card>
-
           <div className="flex justify-between">
             <div className="space-x-2">
               <Button variant="outline" onClick={handlePrevQuestion} disabled={currentQuestion === 0}>
@@ -415,34 +398,21 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                 {markedForReview.includes(question.id) ? "Unmark for Review" : "Mark for Review"}
               </Button>
             </div>
-
             <div className="space-x-2">
               {currentQuestion < test.questions.length - 1 ? (
                 <Button onClick={handleNextQuestion} className="bg-primary-blue hover:bg-blue-700">
                   Save & Next
                 </Button>
               ) : (
-                <Button asChild className="w-full bg-green-600 hover:bg-green-700">
-                  <Link href={`/student/test/${test.id}`}>Start Test</Link>
+                <Button
+                  onClick={handleSubmitTest}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  Submit Test
                 </Button>
               )}
             </div>
           </div>
-
-          {violations.length > 0 && (
-            <Alert className="mt-6" variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <div className="font-medium mb-1">Violations Detected:</div>
-                <ul className="list-disc pl-5 text-sm">
-                  {violations.map((violation, index) => (
-                    <li key={index}>{violation}</li>
-                  ))}
-                </ul>
-                <div className="mt-2 text-sm">Multiple violations may result in automatic test termination.</div>
-              </AlertDescription>
-            </Alert>
-          )}
         </main>
       </div>
     </div>

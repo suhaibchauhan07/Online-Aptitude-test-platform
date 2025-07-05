@@ -79,8 +79,11 @@ export function StudentLayout({ children }: StudentLayoutProps) {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-primary-blue" />
-            <h1 className="text-xl font-semibold text-gray-800">JMIT Aptitude Test</h1>
+            <GraduationCap className="h-7 w-7 text-blue-700 drop-shadow" />
+            <span className="font-semibold text-xl tracking-wide">
+              <span className="text-green-600">JMIT</span>
+              <span className="text-blue-500"> Online Aptitude Test System</span>
+            </span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -99,26 +102,28 @@ export function StudentLayout({ children }: StudentLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex">
         {/* Sidebar */}
-        <aside className="w-16 md:w-64 bg-white border-r border-gray-200 shrink-0">
-          <nav className="p-2 md:p-4 flex flex-col h-full">
-            <div className="space-y-1">
-              <NavItem href="/student/dashboard" icon={<Home className="h-5 w-5" />} label="Dashboard" />
-              <NavItem href="/student/tests" icon={<BookOpen className="h-5 w-5" />} label="Available Tests" />
-              <NavItem href="/student/results" icon={<FileText className="h-5 w-5" />} label="My Results" />
-              <NavItem href="/student/analytics" icon={<BarChart2 className="h-5 w-5" />} label="Analytics" />
-              <NavItem href="/student/profile" icon={<User className="h-5 w-5" />} label="Profile" />
-            </div>
+        <aside className="w-16 md:w-64 bg-transparent shrink-0 flex flex-col items-center py-6 animate-fade-in">
+          <nav className="w-full flex flex-col h-full">
+            <div className="bg-white/80 backdrop-blur shadow-2xl rounded-2xl border border-blue-100 p-4 flex flex-col gap-1 w-full transition-all">
+              <div className="space-y-1">
+                <NavItem href="/student/dashboard" icon={<Home className="h-5 w-5" />} label="Dashboard" />
+                <NavItem href="/student/tests" icon={<BookOpen className="h-5 w-5" />} label="Available Tests" />
+                <NavItem href="/student/results" icon={<FileText className="h-5 w-5" />} label="My Results" />
+                <NavItem href="/student/analytics" icon={<BarChart2 className="h-5 w-5" />} label="Analytics" />
+                <NavItem href="/student/profile" icon={<User className="h-5 w-5" />} label="Profile" />
+              </div>
 
-            <div className="mt-auto">
-              <Link href="/">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
-                >
-                  <LogOut className="h-5 w-5 mr-2" />
-                  <span className="hidden md:inline">Logout</span>
-                </Button>
-              </Link>
+              <div className="mt-auto">
+                <Link href="/">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="h-5 w-5 mr-2" />
+                    <span className="hidden md:inline">Logout</span>
+                  </Button>
+                </Link>
+              </div>
             </div>
           </nav>
         </aside>
@@ -133,7 +138,7 @@ export function StudentLayout({ children }: StudentLayoutProps) {
 function NavItem({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
   return (
     <Link href={href}>
-      <Button variant="ghost" className="w-full justify-start">
+      <Button variant="ghost" className="w-full justify-start hover:scale-[1.03] hover:shadow-blue-200 transition-all">
         {icon}
         <span className="ml-2 hidden md:inline">{label}</span>
       </Button>

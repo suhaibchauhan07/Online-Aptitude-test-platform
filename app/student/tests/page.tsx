@@ -9,8 +9,9 @@ import { AlertCircle } from "lucide-react"
 
 interface Test {
   _id: string
-  testName: string
-  instructions: string
+  title: string
+  description?: string
+  instructions?: string
   startTime: string
   duration: number
   totalMarks: number
@@ -95,29 +96,38 @@ export default function AvailableTestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10">
-      <div className="container mx-auto max-w-2xl">
-        <h1 className="text-2xl font-bold mb-6 text-center">Available Tests</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col items-center justify-center py-12">
+      <h1 className="text-3xl font-extrabold text-blue-900 mb-10 drop-shadow-lg">Available Tests</h1>
+      <div className="w-full max-w-2xl">
         {tests.length === 0 ? (
           <div className="text-center text-gray-600">No available tests at the moment.</div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {tests.map((test) => (
-              <Card key={test._id}>
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                      <h2 className="text-lg font-semibold">{test.testName}</h2>
-                      <div className="text-sm text-gray-500 mb-2">Duration: {test.duration} min | Total Marks: {test.totalMarks}</div>
-                      <div className="text-sm text-gray-700 mb-2">{test.instructions}</div>
-                      <div className="text-xs text-gray-400">Starts: {new Date(test.startTime).toLocaleString()}</div>
+              <div key={test._id} className="bg-white/90 rounded-2xl shadow-2xl border border-blue-100 p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6 transition-transform hover:scale-[1.02]">
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">{test.title}</h2>
+                  {test.instructions && (
+                    <div className="mb-3">
+                      <div className="flex items-center mb-1">
+                        <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C6.753 20.5 2 16.195 2 11.5S6.753 2.5 12 2.5s10 4.305 10 9-4.753 9-10 9z" /></svg>
+                        <span className="text-base font-semibold text-blue-700">Instructions for Students</span>
+                      </div>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900 shadow-md whitespace-pre-line">
+                        {test.instructions}
+                      </div>
                     </div>
-                    <Button className="bg-primary-blue hover:bg-blue-700" onClick={() => handleStartTest(test._id)}>
-                      Start Test
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  )}
+                  <div className="text-sm text-gray-500 mb-1">Duration: {test.duration} min | Total Marks: {test.totalMarks}</div>
+                  <div className="text-xs text-gray-400">Starts: {new Date(test.startTime).toLocaleString()}</div>
+                </div>
+                <button
+                  onClick={() => handleStartTest(test._id)}
+                  className="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:from-blue-600 hover:to-blue-800 transition-all text-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  Start Test
+                </button>
+              </div>
             ))}
           </div>
         )}

@@ -382,9 +382,13 @@ export const startTest = async (req, res) => {
 export const submitTest = async (req, res) => {
     try {
         const { answers } = req.body;
-        const test = await Test.findById(req.params.testId);
+        // Populate questions virtual with correct model name
+        const test = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
         if (!test) {
             return res.status(404).json({ message: 'Test not found' });
+        }
+        if (!Array.isArray(test.questions) || test.questions.length === 0) {
+            return res.status(400).json({ message: 'No questions found for this test' });
         }
 
         // Get student's test attempt
@@ -401,11 +405,17 @@ export const submitTest = async (req, res) => {
             return res.status(400).json({ message: 'Test already submitted' });
         }
 
+        // Map answers to expected format for calculateScore
+        const mappedAnswers = (answers || []).map(ans => ({
+            questionId: ans.questionId,
+            selectedAnswer: ans.answer || ans.selectedAnswer
+        }));
+
         // Calculate score
-        const score = await calculateScore(test, answers);
+        const score = await calculateScore(test, mappedAnswers);
 
         // Update attempt
-        studentTest.answers = answers;
+        studentTest.answers = score.answers;
         studentTest.marksObtained = score.marksObtained;
         studentTest.percentage = score.percentage;
         studentTest.status = 'completed';

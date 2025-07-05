@@ -134,41 +134,6 @@ export default function QuestionUpload({ testId }: { testId: string }) {
                     </div>
                 </CardContent>
             </Card>
-
-            {questions.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Preview Questions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {questions.map((q, index) => (
-                                <div key={index} className="border rounded-lg p-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className="font-medium">Question {index + 1}</h3>
-                                        <span className="text-sm text-gray-500">{q.marks} marks</span>
-                                    </div>
-                                    <p className="mb-2">{q.question}</p>
-                                    <div className="space-y-1">
-                                        {q.options.map((option, i) => (
-                                            <div key={i} className="flex items-center space-x-2">
-                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                                    option === q.correctAnswer ? 'border-green-500 bg-green-50' : ''
-                                                }`}>
-                                                    {option === q.correctAnswer && (
-                                                        <Check className="h-3 w-3 text-green-500" />
-                                                    )}
-                                                </div>
-                                                <span>{option}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
         </div>
     )
 } 
