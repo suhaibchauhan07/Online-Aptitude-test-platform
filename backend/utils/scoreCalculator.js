@@ -1,34 +1,37 @@
 export const calculateScore = async (test, studentAnswers) => {
     let marksObtained = 0;
-    const totalMarks = test.totalMarks;
-    
+    // Fallback to number of questions if totalMarks missing
+    const computedTotalMarks = Number(test.totalMarks ?? (Array.isArray(test.questions) ? test.questions.length : 0)) || 0;
+
     // Calculate marks for each answer
-    const answers = studentAnswers.map(answer => {
-        const question = test.questions.find(q => q._id.toString() === answer.questionId);
-        const isCorrect = question.correctAnswer === answer.selectedAnswer;
-        const marks = isCorrect ? question.marks : 0;
-        
+    const answers = (studentAnswers || []).map(answer => {
+        const question = (test.questions || []).find(q => q._id.toString() === answer.questionId);
+        const isCorrect = Boolean(question) && question.correctAnswer === answer.selectedAnswer;
+        // Default marks to 1 if not provided on question
+        const perQuestionMarks = Number(question?.marks ?? 1);
+        const marks = isCorrect ? perQuestionMarks : 0;
+
         marksObtained += marks;
-        
+
         return {
             questionId: answer.questionId,
             selectedAnswer: answer.selectedAnswer,
             isCorrect,
-            marksObtained: marks
+            marksObtained: Number(marks)
         };
     });
 
-    // Calculate percentage
-    const percentage = (marksObtained / totalMarks) * 100;
-    
+    // Calculate percentage (guard divide-by-zero)
+    const percentage = computedTotalMarks > 0 ? (marksObtained / computedTotalMarks) * 100 : 0;
+
     // Determine pass/fail status (assuming 40% is passing)
     const status = percentage >= 40 ? 'pass' : 'fail';
 
     return {
-        totalMarks,
-        marksObtained,
-        percentage,
+        totalMarks: computedTotalMarks,
+        marksObtained: Number(marksObtained),
+        percentage: Number(percentage),
         status,
         answers
     };
-}; 
+};

@@ -382,6 +382,8 @@ export const startTest = async (req, res) => {
 export const submitTest = async (req, res) => {
     try {
         const { answers } = req.body;
+        console.log('Submit test request:', { testId: req.params.testId, studentId: req.user._id, answersCount: answers?.length });
+        
         // Populate questions virtual with correct model name
         const test = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
         if (!test) {
@@ -391,46 +393,68 @@ export const submitTest = async (req, res) => {
             return res.status(400).json({ message: 'No questions found for this test' });
         }
 
-        // Get student's test attempt
-        const studentTest = await StudentTest.findOne({
-            testId: test._id,
-            studentId: req.user._id
-        });
+        // Get student's test attempt with retry logic for version conflicts
+        let studentTest;
+        let retryCount = 0;
+        const maxRetries = 3;
 
-        if (!studentTest) {
-            return res.status(404).json({ message: 'Test attempt not found' });
+        while (retryCount < maxRetries) {
+            try {
+                studentTest = await StudentTest.findOne({
+                    testId: test._id,
+                    studentId: req.user._id,
+                    status: 'in_progress'
+                });
+
+                if (!studentTest) {
+                    return res.status(404).json({ message: 'Test attempt not found' });
+                }
+
+                // Map answers to expected format for calculateScore
+                const mappedAnswers = (answers || []).map(ans => ({
+                    questionId: ans.questionId,
+                    selectedAnswer: ans.selectedAnswer || ans.answer
+                }));
+
+                // Calculate score
+                const score = await calculateScore(test, mappedAnswers);
+
+                // Update attempt (ensure required numeric fields)
+                studentTest.answers = score.answers;
+                studentTest.totalMarks = Number(score.totalMarks) || (test.totalMarks ?? test.questions.length);
+                studentTest.marksObtained = Number(score.marksObtained) || 0;
+                studentTest.percentage = Number(score.percentage) || 0;
+                studentTest.status = 'completed';
+                studentTest.completedAt = Date.now();
+                studentTest.timeTaken = Math.floor((studentTest.completedAt - studentTest.startedAt) / 60000);
+
+                await studentTest.save();
+                break; // Success, exit retry loop
+                
+            } catch (saveError) {
+                if (saveError.name === 'VersionError' && retryCount < maxRetries - 1) {
+                    console.log(`Version conflict, retrying... (attempt ${retryCount + 1})`);
+                    retryCount++;
+                    await new Promise(resolve => setTimeout(resolve, 100 * retryCount)); // Exponential backoff
+                    continue;
+                } else {
+                    throw saveError;
+                }
+            }
         }
 
-        if (studentTest.status === 'completed') {
-            return res.status(400).json({ message: 'Test already submitted' });
+        if (retryCount >= maxRetries) {
+            return res.status(500).json({ message: 'Failed to save test after multiple attempts' });
         }
-
-        // Map answers to expected format for calculateScore
-        const mappedAnswers = (answers || []).map(ans => ({
-            questionId: ans.questionId,
-            selectedAnswer: ans.answer || ans.selectedAnswer
-        }));
-
-        // Calculate score
-        const score = await calculateScore(test, mappedAnswers);
-
-        // Update attempt
-        studentTest.answers = score.answers;
-        studentTest.marksObtained = score.marksObtained;
-        studentTest.percentage = score.percentage;
-        studentTest.status = 'completed';
-        studentTest.completedAt = Date.now();
-        studentTest.timeTaken = Math.floor((studentTest.completedAt - studentTest.startedAt) / 60000);
-
-        await studentTest.save();
 
         res.status(200).json({
-            totalMarks: score.totalMarks,
-            marksObtained: score.marksObtained,
-            percentage: score.percentage,
+            totalMarks: studentTest.totalMarks,
+            marksObtained: studentTest.marksObtained,
+            percentage: studentTest.percentage,
             timeTaken: studentTest.timeTaken
         });
     } catch (error) {
+        console.error('Submit test error:', error);
         res.status(500).json({ message: 'Error submitting test', error: error.message });
     }
 };
@@ -439,16 +463,59 @@ export const getTestResult = async (req, res) => {
     try {
         const result = await StudentTest.findOne({
             testId: req.params.testId,
-            studentId: req.user._id
-        });
+            studentId: req.user._id,
+            status: 'completed'
+        }).populate('testId', 'title duration totalMarks startTime');
 
         if (!result) {
             return res.status(404).json({ message: 'Result not found' });
         }
 
-        res.json(result);
+        // Calculate analytics
+        const answers = result.answers || [];
+        const correctCount = answers.filter(ans => ans.isCorrect).length;
+        const incorrectCount = answers.length - correctCount;
+        const accuracyRate = answers.length > 0 ? (correctCount / answers.length) * 100 : 0;
+
+        // Format the response with proper data structure
+        const formattedResult = {
+            _id: result._id,
+            testId: result.testId,
+            studentId: result.studentId,
+            answers: result.answers,
+            totalMarks: result.totalMarks,
+            marksObtained: result.marksObtained,
+            percentage: result.percentage,
+            status: result.status,
+            startedAt: result.startedAt,
+            completedAt: result.completedAt,
+            timeTaken: result.timeTaken,
+            // Analytics
+            correctCount,
+            incorrectCount,
+            accuracyRate,
+            totalQuestions: answers.length,
+            // Test details
+            testTitle: result.testId?.title || 'Test',
+            testDuration: result.testId?.duration || 0
+        };
+
+        res.json(formattedResult);
     } catch (error) {
+        console.error('Error fetching result:', error);
         res.status(500).json({ message: 'Error fetching result', error: error.message });
+    }
+};
+
+// List all results for current student (latest first)
+export const getMyResults = async (req, res) => {
+    try {
+        const results = await StudentTest.find({ studentId: req.user._id, status: 'completed' })
+            .sort({ completedAt: -1 })
+            .populate({ path: 'testId', model: 'Test', select: 'title duration totalMarks startTime' });
+        res.status(200).json(results);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching results', error: error.message });
     }
 };
 

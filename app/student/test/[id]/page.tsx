@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-import { use } from 'react';
+import { use, useEffect, useMemo, useRef, useState } from "react";
 
-import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertTriangle, Clock, AlertCircle, GraduationCap } from "lucide-react"
+import { AlertTriangle, Clock, AlertCircle, GraduationCap, MonitorSmartphone } from "lucide-react"
 import Link from "next/link"
 
 interface Question {
@@ -134,7 +133,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
     document.addEventListener("fullscreenchange", handleFullscreenChange)
 
-    // Request fullscreen when component mounts
+    // Request fullscreen when component mounts (only if user gesture is available)
     const requestFullscreen = async () => {
       try {
         if (document.documentElement.requestFullscreen) {
@@ -142,10 +141,12 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
         }
       } catch (error) {
         console.error("Couldn't enter fullscreen mode:", error)
+        // Don't show error to user, just log it
       }
     }
 
-    requestFullscreen()
+    // Only request fullscreen if there's a user gesture available
+    // This will be handled by the start test button instead
 
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange)
@@ -232,7 +233,8 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
       })
 
       if (!response.ok) {
-        throw new Error('Failed to submit test')
+        const text = await response.text()
+        throw new Error(text || 'Failed to submit test')
       }
 
       // Redirect to results page
@@ -284,9 +286,26 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             <span className="text-blue-500"> Online Aptitude Test System</span>
           </h1>
         </div>
-        <div className="flex items-center gap-3 bg-blue-100 px-5 py-2 rounded-full shadow-md border border-blue-200">
-          <Clock className="h-5 w-5 text-blue-600 mr-2" />
-          <span className="font-bold text-lg text-blue-700 tracking-wider">{formatTime(timeLeft)}</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={async () => {
+              try {
+                if (document.documentElement.requestFullscreen) {
+                  await document.documentElement.requestFullscreen()
+                }
+              } catch (error) {
+                console.error("Couldn't enter fullscreen mode:", error)
+              }
+            }}
+            className="bg-green-100 hover:bg-green-200 px-4 py-2 rounded-full shadow-md border border-green-200 transition-colors duration-200 flex items-center gap-2"
+          >
+            <MonitorSmartphone className="h-4 w-4 text-green-600" />
+            <span className="text-sm font-medium text-green-700">Enter Fullscreen</span>
+          </button>
+          <div className="flex items-center gap-3 bg-blue-100 px-5 py-2 rounded-full shadow-md border border-blue-200">
+            <Clock className="h-5 w-5 text-blue-600 mr-2" />
+            <span className="font-bold text-lg text-blue-700 tracking-wider">{formatTime(timeLeft)}</span>
+          </div>
         </div>
       </header>
       <div className="flex h-[calc(100vh-7rem)]">

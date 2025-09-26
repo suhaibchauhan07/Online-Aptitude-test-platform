@@ -11,7 +11,8 @@ import {
     getTestDetails,
     getTestResult,
     getAllTestQuestions,
-    getTestQuestionsForStudent
+    getTestQuestionsForStudent,
+    getMyResults
 } from '../controllers/studentController.js';
 import { authMiddleware, requireRole } from '../middleware/authMiddleware.js';
 
@@ -21,9 +22,8 @@ const router = express.Router();
 router.post('/register', registerStudent);
 router.post('/login', loginStudent);
 
-// Protected routes
+// Protected routes - apply auth middleware to all routes
 router.use(authMiddleware);
-router.use(requireRole(['student']));
 
 // Profile routes
 router.get('/profile', getStudentProfile);
@@ -36,6 +36,8 @@ router.get('/instructions/:testId', getInstructions);
 router.post('/tests/:testId/start', startTest);
 router.post('/tests/:testId/submit', submitTest);
 router.get('/tests/:testId/result', getTestResult);
+// My results
+router.get('/results', getMyResults);
 
 // Question routes
 router.get('/questions', getAllTestQuestions);
