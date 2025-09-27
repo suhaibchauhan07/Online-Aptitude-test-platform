@@ -79,12 +79,16 @@ export default function AvailableTestsPage() {
       }
       
       const data = await response.json()
-      if (data && data.attemptId) {
+      console.log('Start test response:', data)
+      
+      // Check if the response has the expected structure
+      if (data.status === 'success' && data.data && data.data.attemptId) {
         router.push(`/student/test/${testId}`)
       } else {
-        setError("Failed to start test")
+        setError("Failed to start test - invalid response from server")
       }
     } catch (err) {
+      console.error('Error starting test:', err)
       setError("Network error. Please check your connection and try again.")
     }
   }

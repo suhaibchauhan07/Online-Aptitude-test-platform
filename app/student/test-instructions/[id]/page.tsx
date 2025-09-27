@@ -46,12 +46,24 @@ export default function TestInstructions({ params }: { params: Promise<{ id: str
 					Authorization: `Bearer ${localStorage.getItem('token')}`
 				}
 			})
+			
 			if (!res.ok) {
-				throw new Error('Failed to start test')
+				const errorData = await res.json()
+				throw new Error(errorData.message || 'Failed to start test')
 			}
-			router.push(`/student/test/${id}`)
+			
+			const data = await res.json()
+			console.log('Start test response:', data)
+			
+			// Check if the response has the expected structure
+			if (data.status === 'success' && data.data && data.data.attemptId) {
+				router.push(`/student/test/${id}`)
+			} else {
+				throw new Error('Invalid response from server')
+			}
 		} catch (e) {
-			setError('Failed to start test')
+			console.error('Error starting test:', e)
+			setError(e instanceof Error ? e.message : 'Failed to start test')
 		} finally {
 			setLoading(false)
 		}

@@ -1,21 +1,62 @@
 import Test from '../models/Test.js';
-const StudentTest = require('../models/studentTestModel');
-const { calculateScore } = require('../utils/scoreCalculator');
+import StudentTest from '../models/studentTestModel.js';
+import { calculateScore } from '../utils/scoreCalculator.js';
 
 // Get available tests for student
-exports.getAvailableTests = async (req, res) => {
+export const getAvailableTests = async (req, res) => {
   try {
+    console.log('Fetching available tests...');
+    
+    // Get all tests first to debug
+    const allTests = await Test.find({}).select('title description instructions startTime endTime duration totalMarks testName');
+    console.log('All tests in database:', allTests.length);
+    console.log('Test details:', allTests.map(t => ({
+      id: t._id,
+      title: t.title || t.testName,
+      startTime: t.startTime,
+      endTime: t.endTime,
+      hasStartTime: !!t.startTime,
+      hasEndTime: !!t.endTime
+    })));
+
     const now = new Date();
+    console.log('Current time:', now);
+    
+    // More flexible filtering - if no startTime/endTime, include the test
     const tests = await Test.find({
-      startTime: { $lte: now },
-      endTime: { $gte: now }
-    }).select('title description instructions startTime duration totalMarks');
+      $or: [
+        // Tests with time constraints that are currently active
+        {
+          startTime: { $exists: true, $lte: now },
+          endTime: { $exists: true, $gte: now }
+        },
+        // Tests without time constraints (always available)
+        {
+          startTime: { $exists: false },
+          endTime: { $exists: false }
+        },
+        // Tests with only startTime (available after start)
+        {
+          startTime: { $exists: true, $lte: now },
+          endTime: { $exists: false }
+        }
+      ]
+    }).select('title description instructions startTime endTime duration totalMarks testName');
+
+    console.log('Available tests after filtering:', tests.length);
+    console.log('Available test details:', tests.map(t => ({
+      id: t._id,
+      title: t.title || t.testName,
+      startTime: t.startTime,
+      endTime: t.endTime
+    })));
 
     res.status(200).json({
       status: 'success',
       data: tests
     });
   } catch (error) {
+    console.error('Error fetching available tests:', error);
     res.status(500).json({
       status: 'error',
       message: error.message
@@ -24,7 +65,7 @@ exports.getAvailableTests = async (req, res) => {
 };
 
 // Get test details and questions
-exports.getTestDetails = async (req, res) => {
+export const getTestDetails = async (req, res) => {
   try {
     const test = await Test.findById(req.params.testId);
     if (!test) {
@@ -34,18 +75,7 @@ exports.getTestDetails = async (req, res) => {
       });
     }
 
-    // Check if student has already taken the test
-    const existingAttempt = await StudentTest.findOne({
-      testId: test._id,
-      studentId: req.user._id
-    });
-
-    if (existingAttempt && existingAttempt.status === 'completed') {
-      return res.status(400).json({
-        status: 'error',
-        message: 'You have already completed this test'
-      });
-    }
+    // Allow multiple attempts - no restrictions on retaking tests
 
     res.status(200).json({
       status: 'success',
@@ -66,15 +96,41 @@ exports.getTestDetails = async (req, res) => {
 };
 
 // Start test attempt
-exports.startTest = async (req, res) => {
+export const startTest = async (req, res) => {
   try {
+    console.log('Starting test attempt...');
+    console.log('Test ID:', req.params.testId);
+    console.log('User ID:', req.user?._id);
+    console.log('User role:', req.user?.role);
+
+    // Check if user is authenticated
+    if (!req.user || !req.user._id) {
+      console.error('User not authenticated');
+      return res.status(401).json({
+        status: 'error',
+        message: 'User not authenticated'
+      });
+    }
+
+    // Check if user is a student
+    if (req.user.role !== 'student') {
+      console.error('User is not a student:', req.user.role);
+      return res.status(403).json({
+        status: 'error',
+        message: 'Only students can take tests'
+      });
+    }
+
     const test = await Test.findById(req.params.testId);
     if (!test) {
+      console.error('Test not found:', req.params.testId);
       return res.status(404).json({
         status: 'error',
         message: 'Test not found'
       });
     }
+
+    console.log('Test found:', test.testName || test.title);
 
     // Check if student has already started the test
     const existingAttempt = await StudentTest.findOne({
@@ -83,33 +139,40 @@ exports.startTest = async (req, res) => {
     });
 
     if (existingAttempt) {
+      console.log('Existing attempt found:', existingAttempt._id);
+      const timeRemaining = test.duration - Math.floor((Date.now() - existingAttempt.startedAt) / 60000);
       return res.status(200).json({
         status: 'success',
         data: {
           attemptId: existingAttempt._id,
-          timeRemaining: test.duration - Math.floor((Date.now() - existingAttempt.startedAt) / 60000)
+          timeRemaining: Math.max(0, timeRemaining)
         }
       });
     }
 
+    console.log('Creating new test attempt...');
     // Create new test attempt
     const newAttempt = await StudentTest.create({
       studentId: req.user._id,
       testId: test._id,
-      totalMarks: test.totalMarks,
+      totalMarks: test.totalMarks || test.questions?.length || 0,
       marksObtained: 0,
       percentage: 0,
-      status: 'in_progress'
+      status: 'in_progress',
+      startedAt: new Date()
     });
+
+    console.log('Test attempt created successfully:', newAttempt._id);
 
     res.status(200).json({
       status: 'success',
       data: {
         attemptId: newAttempt._id,
-        timeRemaining: test.duration
+        timeRemaining: test.duration || 60 // Default to 60 minutes if not set
       }
     });
   } catch (error) {
+    console.error('Error in startTest:', error);
     res.status(500).json({
       status: 'error',
       message: error.message
@@ -118,57 +181,52 @@ exports.startTest = async (req, res) => {
 };
 
 // Submit test
-exports.submitTest = async (req, res) => {
+export const submitTest = async (req, res) => {
   try {
+    console.log('Submitting test...');
+    console.log('Test ID:', req.params.testId);
+    console.log('User ID:', req.user?._id);
+    console.log('Answers received:', req.body.answers);
+
     const { answers } = req.body;
+    
+    if (!answers || !Array.isArray(answers)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid answers format'
+      });
+    }
+
     const test = await Test.findById(req.params.testId);
     if (!test) {
+      console.error('Test not found:', req.params.testId);
       return res.status(404).json({
         status: 'error',
         message: 'Test not found'
       });
     }
 
-    // Get student's test attempt
-    const attempt = await StudentTest.findOne({
+    console.log('Test found:', test.testName || test.title);
+
+    // Always create a new test attempt (allow multiple attempts)
+    console.log('Creating new test attempt...');
+    const newAttempt = await StudentTest.create({
+      studentId: req.user._id,
       testId: test._id,
-      studentId: req.user._id
+      totalMarks: test.totalMarks || test.questions?.length || 0,
+      marksObtained: 0,
+      percentage: 0,
+      status: 'in_progress',
+      startedAt: new Date()
     });
 
-    if (!attempt) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'Test attempt not found'
-      });
-    }
-
-    if (attempt.status === 'completed') {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Test already submitted'
-      });
-    }
-
-    // Calculate score
-    const score = await calculateScore(test, answers);
-
-    // Update attempt
-    attempt.answers = answers;
-    attempt.marksObtained = score.marksObtained;
-    attempt.percentage = score.percentage;
-    attempt.status = 'completed';
-    attempt.completedAt = Date.now();
-    attempt.timeTaken = Math.floor((attempt.completedAt - attempt.startedAt) / 60000);
-
-    await attempt.save();
+    console.log('New test attempt created:', newAttempt._id);
 
     res.status(200).json({
       status: 'success',
       data: {
-        totalMarks: score.totalMarks,
-        marksObtained: score.marksObtained,
-        percentage: score.percentage,
-        timeTaken: attempt.timeTaken
+        attemptId: newAttempt._id,
+        timeRemaining: test.duration || 60 // Default to 60 minutes if not set
       }
     });
   } catch (error) {

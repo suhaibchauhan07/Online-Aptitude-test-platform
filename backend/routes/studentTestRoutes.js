@@ -5,15 +5,17 @@ import {
     getStudentProfile,
     updateStudentProfile,
     getInstructions, 
-    startTest, 
-    submitTest,
-    getAvailableTests,
-    getTestDetails,
     getTestResult,
     getAllTestQuestions,
     getTestQuestionsForStudent,
     getMyResults
 } from '../controllers/studentController.js';
+import { 
+    getAvailableTests,
+    getTestDetails,
+    startTest,
+    submitTest
+} from '../controllers/studentTestController.js';
 import { authMiddleware, requireRole } from '../middleware/authMiddleware.js';
 
 const router = express.Router();

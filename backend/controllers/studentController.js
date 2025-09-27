@@ -2,7 +2,7 @@ import Student from '../models/Student.js';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Test from '../models/Test.js';
-import { StudentTest } from '../models/studentTestModel.js';
+import StudentTest from '../models/studentTestModel.js';
 import { calculateScore } from '../utils/scoreCalculator.js';
 import TestQuestions from '../models/testQuestions.js';
 

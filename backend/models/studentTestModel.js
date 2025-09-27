@@ -64,4 +64,4 @@ studentTestSchema.index({ studentId: 1, testId: 1 });
 // Check if model exists before creating it
 const StudentTest = mongoose.models.StudentTest || mongoose.model('StudentTest', studentTestSchema);
 
-export { StudentTest }; 
+export default StudentTest; 
