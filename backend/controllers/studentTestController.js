@@ -211,13 +211,13 @@ export const submitTest = async (req, res) => {
     // Always create a new test attempt (allow multiple attempts)
     console.log('Creating new test attempt...');
     const newAttempt = await StudentTest.create({
-      studentId: req.user._id,
+      studentId: req.user._id, 
       testId: test._id,
       totalMarks: test.totalMarks || test.questions?.length || 0,
       marksObtained: 0,
       percentage: 0,
       status: 'in_progress',
-      startedAt: new Date()
+      startedAt: new Date() 
     });
 
     console.log('New test attempt created:', newAttempt._id);
