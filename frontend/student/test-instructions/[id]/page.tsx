@@ -9,8 +9,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Clock, AlertTriangle, CheckCircle, MonitorSmartphone, MousePointer2, Ban } from "lucide-react"
 
-export default function TestInstructions({ params }: { params: Promise<{ id: string }> }) {
-	const { id } = use(params)
+// This function is required for static site generation with dynamic routes
+export default function TestInstructions({ params }: { params: { id: string } }) {
+	const id = params.id
 	const router = useRouter()
 	const [agreed, setAgreed] = useState(false)
 	const [loading, setLoading] = useState(false)
