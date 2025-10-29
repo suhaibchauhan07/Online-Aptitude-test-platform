@@ -10,7 +10,7 @@ const AvailableTests = () => {
   useEffect(() => {
     const checkQuestions = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/student/questions", {
+        const response = await axios.get("https://online-aptitude-test-platform-1.onrender.com/api/student/questions", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
         setHasQuestions(response.data.length > 0);
