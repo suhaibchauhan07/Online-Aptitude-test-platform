@@ -1,15 +1,14 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { StudentLayout } from "@/components/student-layout"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Clock, AlertTriangle, CheckCircle, MonitorSmartphone, MousePointer2, Ban } from "lucide-react"
+import { AlertTriangle } from "lucide-react"
 
-// This function is required for static site generation with dynamic routes
 export default function TestInstructions({ params }: { params: { id: string } }) {
 	const id = params.id
 	const router = useRouter()

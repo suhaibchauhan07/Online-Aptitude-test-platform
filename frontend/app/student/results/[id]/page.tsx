@@ -1,15 +1,13 @@
 "use client";
-import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
-import type React from "react";
+import { useEffect, useState } from "react";
 import { StudentLayout } from "@/components/student-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, AlertTriangle, Clock, Trophy, Award, Star, TrendingUp, Calendar, Target, Zap, FileText, CheckCheck, ArrowRight, User, Brain, Timer } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Clock, Trophy, Award, Star, TrendingUp, Calendar, Target, Zap, FileText, Brain, Timer, ArrowRight } from "lucide-react";
 
-export default function TestResult({ params }: { params: Promise<{ id: string }> }) {
-	const { id } = use(params)
+export default function TestResult({ params }: { params: { id: string } }) {
+	const id = params.id
 	const [result, setResult] = useState<any>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -28,10 +26,8 @@ export default function TestResult({ params }: { params: Promise<{ id: string }>
 					throw new Error(errorData.message || 'Failed to fetch result');
 				}
 				const data = await response.json();
-				console.log('Fetched result data:', data); // Debug log
 				setResult(data);
 			} catch (err) {
-				console.error('Error fetching result:', err);
 				setError(err instanceof Error ? err.message : 'Failed to fetch result');
 			} finally {
 				setLoading(false);
