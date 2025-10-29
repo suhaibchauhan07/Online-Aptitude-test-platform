@@ -5,7 +5,7 @@ services:
     rootDir: frontend
     buildCommand: npm run build
     startCommand: npm start
-    staticPublishPath: .next
+    staticPublishPath: ./
     envVars:
       - key: NODE_ENV
         value: production
