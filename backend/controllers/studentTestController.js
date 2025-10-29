@@ -4,9 +4,8 @@ import { calculateScore } from '../utils/scoreCalculator.js';
 
 // Get available tests for student
 export const getAvailableTests = async (req, res) => {
-  try {
-    console.log('Fetching available tests...');
-    
+  try {    
+    console.log('Fetching available tests...');    
     // Get all tests first to debug
     const allTests = await Test.find({}).select('title description instructions startTime endTime duration totalMarks testName');
     console.log('All tests in database:', allTests.length);
@@ -20,8 +19,7 @@ export const getAvailableTests = async (req, res) => {
     })));
 
     const now = new Date();
-    console.log('Current time:', now);
-    
+    console.log('Current time:', now);    
     // More flexible filtering - if no startTime/endTime, include the test
     const tests = await Test.find({
       $or: [

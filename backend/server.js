@@ -2,6 +2,9 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import path from 'path';
 import studentTestRoutes from './routes/studentTestRoutes.js';
 import facultyRoutes from './routes/facultyRoutes.js';
 import testRoutes from './routes/testRoutes.js';
@@ -10,13 +13,36 @@ import uploadRoutes from './routes/uploadRoutes.js';
 // Suppress deprecation warnings
 process.removeAllListeners('warning');
 
-dotenv.config();
+// Get directory path for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+// Hardcode MongoDB URI if not found in .env
+if (!process.env.MONGODB_URI) {
+    process.env.MONGODB_URI = 'mongodb+srv://suhaib07:suhaibmongoatlas123@cluster0.iqxtsqv.mongodb.net/aptitude_test?retryWrites=true&w=majority';
+}
+
+// Verify MongoDB URI is loaded
+console.log('MongoDB URI loaded:', process.env.MONGODB_URI ? 'Yes' : 'No');
 
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+    'http://localhost:3000',
+    process.env.FRONTEND_ORIGIN
+].filter(Boolean);
+
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
 }));
 app.use(express.json());
@@ -92,5 +118,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-    console.log(`CORS enabled for: http://localhost:3000`);
+    console.log(`CORS enabled for: ${allowedOrigins.join(', ')}`);
 });
