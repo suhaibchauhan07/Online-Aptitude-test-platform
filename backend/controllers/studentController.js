@@ -406,8 +406,17 @@ export const submitTest = async (req, res) => {
                     status: 'in_progress'
                 });
 
+                // If no in-progress attempt exists, create one on the fly (robustness)
                 if (!studentTest) {
-                    return res.status(404).json({ message: 'Test attempt not found' });
+                    studentTest = await StudentTest.create({
+                        studentId: req.user._id,
+                        testId: test._id,
+                        totalMarks: Number(test.totalMarks ?? test.questions.length) || 0,
+                        marksObtained: 0,
+                        percentage: 0,
+                        status: 'in_progress',
+                        startedAt: Date.now()
+                    });
                 }
 
                 // Map answers to expected format for calculateScore
@@ -497,55 +506,46 @@ export const getTestResult = async (req, res) => {
             }
         }
 
-        // If still no result, create a sample result for demo purposes
+        // If no result found, return a 404 error
         if (!result) {
-            console.log('No test attempt found, creating sample result for demo');
-            const test = await Test.findById(req.params.testId);
-            
-            if (!test) {
-                return res.status(404).json({ message: 'Test not found' });
-            }
-            
-            // Create sample answers
-            const questions = await TestQuestions.find({ testId: test._id });
-            const sampleAnswers = questions.map(q => ({
-                questionId: q._id,
-                selectedAnswer: q.options[Math.floor(Math.random() * q.options.length)],
-                isCorrect: Math.random() > 0.5, // Random correct/incorrect
-                marksObtained: Math.random() > 0.5 ? 1 : 0 // Random marks
-            }));
-            
-            // Create a new completed test attempt with sample data
-            result = await StudentTest.create({
-                studentId: req.user._id,
-                testId: test._id,
-                totalMarks: questions.length,
-                marksObtained: sampleAnswers.filter(a => a.isCorrect).length,
-                percentage: (sampleAnswers.filter(a => a.isCorrect).length / questions.length) * 100,
-                status: 'completed',
-                startedAt: new Date(Date.now() - 30 * 60000), // 30 minutes ago
-                completedAt: new Date(),
-                timeTaken: 30, // 30 minutes
-                answers: sampleAnswers
+            console.log('No test attempt found for this test');
+            return res.status(404).json({ 
+                message: 'No test attempt found. Please attempt the test first.' 
             });
-            
-            await result.populate('testId', 'title duration totalMarks startTime');
-            console.log('Created sample result for demo purposes');
+        }
+        
+        // Make sure we're using the actual test data
+        const test = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
+        if (!test) {
+            return res.status(404).json({ message: 'Test not found' });
         }
 
-        // Calculate analytics
-        const answers = result.answers || [];
+        // Ensure answers include correctness; recompute if missing
+        let answers = result.answers || [];
+        const needsRecalc = answers.some(a => typeof a.isCorrect === 'undefined');
+        if (needsRecalc) {
+            const test = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
+            const mapped = answers.map(a => ({ questionId: a.questionId?.toString?.() || String(a.questionId), selectedAnswer: a.selectedAnswer }));
+            const score = await calculateScore(test, mapped);
+            result.answers = score.answers;
+            result.totalMarks = Number(score.totalMarks) || result.totalMarks;
+            result.marksObtained = Number(score.marksObtained);
+            result.percentage = Number(score.percentage);
+            await result.save();
+            answers = result.answers;
+        }
+
         const correctCount = answers.filter(ans => ans.isCorrect).length;
         const incorrectCount = answers.length - correctCount;
         const accuracyRate = answers.length > 0 ? (correctCount / answers.length) * 100 : 0;
 
-        // Format the response with proper data structure
+        // Ensure we're using actual data, not sample data
         const formattedResult = {
             _id: result._id,
             testId: result.testId,
             studentId: result.studentId,
             answers: result.answers,
-            totalMarks: result.totalMarks,
+            totalMarks: result.totalMarks || test.totalMarks,
             marksObtained: result.marksObtained,
             percentage: result.percentage,
             status: result.status,
@@ -558,8 +558,8 @@ export const getTestResult = async (req, res) => {
             accuracyRate,
             totalQuestions: answers.length,
             // Test details
-            testTitle: result.testId?.title || 'Test',
-            testDuration: result.testId?.duration || 0
+            testTitle: test.title || test.testName || 'Test',
+            testDuration: test.duration || 0
         };
 
         res.json(formattedResult);

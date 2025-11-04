@@ -11,26 +11,34 @@ export default function StudentDashboard() {
   const upcomingTests = [
     {
       id: "1",
-      title: "Data Structures Aptitude Test",
+      title: "Quantitive Aptitude Test",
+      date: "May 10, 2024",
+      time: "10:00 AM",
+      duration: "60 minutes",
+      status: "upcoming",
+    },
+     {
+      id: "2",
+      title: "Verbal Aptitude Test",
       date: "May 10, 2024",
       time: "10:00 AM",
       duration: "60 minutes",
       status: "upcoming",
     },
     {
-      id: "2",
-      title: "Algorithms Fundamentals",
-      date: "May 15, 2024",
-      time: "2:00 PM",
-      duration: "90 minutes",
+      id: "3",
+      title: "Reasioning Test",
+      date: "May 10, 2024",
+      time: "10:00 AM",
+      duration: "60 minutes",
       status: "upcoming",
     },
   ]
 
   const recentResults = [
     {
-      id: "3",
-      title: "Programming Basics",
+      id: "4",
+      title: "Verbal Aptitude Test",
       date: "April 25, 2024",
       score: 85,
       totalQuestions: 30,
@@ -38,8 +46,8 @@ export default function StudentDashboard() {
       status: "passed",
     },
     {
-      id: "4",
-      title: "Computer Networks",
+      id: "5",
+      title: "Quantitive Aptitude Test",
       date: "April 15, 2024",
       score: 72,
       totalQuestions: 25,

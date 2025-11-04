@@ -77,7 +77,7 @@ export default function StudentLogin() {
           <div className="flex flex-col items-center mb-2">
             <GraduationCap className="h-12 w-12 text-[#0074b7] mb-2" />
             <h2 className="text-3xl md:text-4xl font-bold text-[#22223b] mb-2">Student Login</h2>
-            <p className="text-[#4a4e69] text-base mb-4 text-center">Enter your email and password to access your student dashboard</p>
+            <p className="text-[#4a4e69] text-base mb-4 text-center">Enter your Roll Number and password to access your student dashboard</p>
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="rollNumber" className="font-semibold text-lg text-[#4a4e69]">Roll Number</Label>

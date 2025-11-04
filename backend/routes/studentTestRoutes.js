@@ -8,13 +8,13 @@ import {
     getTestResult,
     getAllTestQuestions,
     getTestQuestionsForStudent,
-    getMyResults
+    getMyResults,
+    submitTest
 } from '../controllers/studentController.js';
 import { 
     getAvailableTests,
     getTestDetails,
-    startTest,
-    submitTest
+    startTest
 } from '../controllers/studentTestController.js';
 import { authMiddleware, requireRole } from '../middleware/authMiddleware.js';
 
