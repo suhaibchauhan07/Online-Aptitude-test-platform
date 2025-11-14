@@ -59,7 +59,13 @@ export default function FacultyLogin() {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        if (response.status === 404) {
+          throw new Error("Invalid email. Please check and try again.");
+        } else if (response.status === 401) {
+          throw new Error("Incorrect password. Please try again.");
+        } else {
+          throw new Error(data.message || 'Login failed');
+        }
       }
 
       // Store the token in localStorage
@@ -125,6 +131,12 @@ export default function FacultyLogin() {
               </Button>
             </div>
           </div>
+          {error && (
+            <Alert variant="destructive" className="animate-shake">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <Button
             type="submit"
             className="w-full bg-[#0074b7] hover:bg-[#005fa3] text-white font-bold py-4 text-xl rounded-md focus:ring-2 focus:ring-blue-400 transition-all duration-200 relative overflow-hidden group"

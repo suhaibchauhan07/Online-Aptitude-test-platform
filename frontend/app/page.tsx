@@ -62,6 +62,17 @@ export default function LandingPage() {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-green-500 text-green-700 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-900 transition-all text-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                >
+                  <Link href="/practice">
+                    Practice Questions
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
               </div>
             </div>
             <div className="hidden md:flex justify-center items-center">
@@ -75,30 +86,6 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-
-        {/* Practice Tests by Category Section */}
-        <section className="bg-white/90 py-16">
-          <div className="container">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">Practice Tests by Category</h2>
-            <p className="text-center text-gray-600 mb-10">Find the test prep materials suitable for your needs. Select the relevant category below.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {practiceCategories.map((cat) => (
-                <div
-                  key={cat.name}
-                  className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden flex flex-col items-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:bg-gradient-to-br hover:from-blue-50 hover:to-white focus-within:shadow-2xl focus-within:-translate-y-2 cursor-pointer group"
-                  tabIndex={0}
-                >
-                  <div className="w-full aspect-[16/9] overflow-hidden">
-                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover rounded-t-2xl group-hover:scale-105 transition-transform duration-300" />
-                  </div>
-                  <div className="p-5 w-full text-center">
-                    <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-1 group-hover:text-blue-700 transition-colors duration-200">{cat.name}</h3>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* Features Section */}
         <div className="bg-white/90 py-20">
