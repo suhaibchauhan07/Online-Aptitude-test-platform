@@ -113,13 +113,13 @@ export default function AvailableTestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col items-center justify-center py-12">
-      <h1 className="text-3xl font-extrabold text-blue-900 mb-10 drop-shadow-lg">Available Tests</h1>
-      <div className="w-full max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white py-12 px-4">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-extrabold text-blue-900 mb-10 drop-shadow-lg text-center">Available Tests</h1>
         {tests.length === 0 ? (
           <div className="text-center text-gray-600">No available tests at the moment.</div>
         ) : (
-          <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {tests.map((test) => {
               const now = new Date()
               const startTime = new Date(test.startTime)
@@ -129,57 +129,59 @@ export default function AvailableTestsPage() {
               const isTestExpired = now > endTime
               
               return (
-                <div key={test._id} className={`bg-white/90 rounded-2xl shadow-2xl border p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6 transition-transform hover:scale-[1.02] ${
+                <div key={test._id} className={`bg-white/90 rounded-2xl shadow-2xl border p-6 flex flex-col transition-transform hover:scale-[1.02] ${
                   isTestAvailable ? 'border-green-200 bg-green-50/30' : 
                   isTestUpcoming ? 'border-yellow-200 bg-yellow-50/30' : 
                   'border-red-200 bg-red-50/30'
                 }`}>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h2 className="text-xl font-bold text-gray-900">{test.title}</h2>
-                      <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        isTestAvailable ? 'bg-green-100 text-green-700' : 
-                        isTestUpcoming ? 'bg-yellow-100 text-yellow-700' : 
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {isTestAvailable ? '🟢 Available' : 
-                         isTestUpcoming ? '🟡 Upcoming' : 
-                         '🔴 Expired'}
-                      </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-xl font-bold text-gray-900 flex-1">{test.title}</h2>
+                    <div className={`px-3 py-1 rounded-full text-xs font-semibold ml-2 ${
+                      isTestAvailable ? 'bg-green-100 text-green-700' : 
+                      isTestUpcoming ? 'bg-yellow-100 text-yellow-700' : 
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {isTestAvailable ? '🟢 Available' : 
+                       isTestUpcoming ? '🟡 Upcoming' : 
+                       '🔴 Expired'}
                     </div>
+                  </div>
+                  
                   {test.instructions && (
-                    <div className="mb-3">
-                      <div className="flex items-center mb-1">
+                    <div className="mb-4">
+                      <div className="flex items-center mb-2">
                         <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C6.753 20.5 2 16.195 2 11.5S6.753 2.5 12 2.5s10 4.305 10 9-4.753 9-10 9z" /></svg>
-                        <span className="text-base font-semibold text-blue-700">Instructions for Students</span>
+                        <span className="text-sm font-semibold text-blue-700">Instructions for Students</span>
                       </div>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900 shadow-md whitespace-pre-line">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900 shadow-md whitespace-pre-line">
                         {test.instructions}
                       </div>
                     </div>
                   )}
-                  <div className="text-sm text-gray-500 mb-1">Duration: {test.duration} min | Total Marks: {test.totalMarks}</div>
-                  <div className="text-xs text-gray-400 space-y-1">
+                  
+                  <div className="text-sm text-gray-600 mb-2 font-medium">Duration: {test.duration} min | Total Marks: {test.totalMarks}</div>
+                  
+                  <div className="text-xs text-gray-500 space-y-1 mb-4">
                     <div>📅 Starts: {new Date(test.startTime).toLocaleString()}</div>
                     <div>⏰ Ends: {new Date(new Date(test.startTime).getTime() + test.duration * 60000).toLocaleString()}</div>
                   </div>
+                  
+                  <button
+                    onClick={() => handleStartTest(test._id)}
+                    disabled={!isTestAvailable}
+                    className={`mt-auto font-bold py-3 px-6 rounded-xl shadow-lg transition-all text-base focus:outline-none focus:ring-2 w-full ${
+                      isTestAvailable 
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 focus:ring-blue-400' 
+                        : isTestUpcoming
+                        ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white cursor-not-allowed opacity-70'
+                        : 'bg-gradient-to-r from-red-400 to-red-600 text-white cursor-not-allowed opacity-70'
+                    }`}
+                  >
+                    {isTestAvailable ? 'Start Test' : 
+                     isTestUpcoming ? 'Test Not Started' : 
+                     'Test Expired'}
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleStartTest(test._id)}
-                  disabled={!isTestAvailable}
-                  className={`font-bold py-3 px-8 rounded-xl shadow-lg transition-all text-lg focus:outline-none focus:ring-2 ${
-                    isTestAvailable 
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 focus:ring-blue-400' 
-                      : isTestUpcoming
-                      ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white cursor-not-allowed opacity-70'
-                      : 'bg-gradient-to-r from-red-400 to-red-600 text-white cursor-not-allowed opacity-70'
-                  }`}
-                >
-                  {isTestAvailable ? 'Start Test' : 
-                   isTestUpcoming ? 'Test Not Started' : 
-                   'Test Expired'}
-                </button>
-              </div>
               )
             })}
           </div>

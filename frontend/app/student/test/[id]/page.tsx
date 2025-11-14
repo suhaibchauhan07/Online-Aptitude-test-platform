@@ -1,18 +1,14 @@
 "use client"
 
-import type React from "react"
-import { use, useEffect, useMemo, useRef, useState } from "react";
-
+import { use, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group" 
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertTriangle, Clock, AlertCircle, GraduationCap, MonitorSmartphone } from "lucide-react"
-import Link from "next/link"
+import { Clock, AlertCircle, X, CheckCircle2, AlertTriangle, Flag } from "lucide-react"
 
 interface Question {
   id: string
@@ -30,18 +26,17 @@ interface Test {
 }
 
 export default function TestPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)  // Use use(params) to handle async params 
+  const { id } = use(params)
   const router = useRouter()
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<Record<string, any>>({})
   const [markedForReview, setMarkedForReview] = useState<string[]>([])
-  const [timeLeft, setTimeLeft] = useState(3600) // 60 minutes in seconds
-  const [isFullscreen, setIsFullscreen] = useState(true)
-  const [violations, setViolations] = useState<string[]>([])
-  const [showWarning, setShowWarning] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(0)
+  const [initialDuration, setInitialDuration] = useState(0)
   const [test, setTest] = useState<Test | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Fetch test data
   useEffect(() => {
@@ -59,7 +54,6 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
         const data = await response.json()
 
-        // Fetch questions for this test
         const questionsRes = await fetch(`http://localhost:5000/api/student/tests/${id}/questions`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -70,10 +64,20 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
         }
         const questions = await questionsRes.json()
 
+        // Handle both direct data and nested data.data structure
+        const testData = data.data || data
+        const durationInMinutes = testData.duration || data.duration || 60 // Default to 60 minutes if not found
+        const durationInSeconds = durationInMinutes * 60
+
         setTest({
-          ...data,
-          questions
+          ...testData,
+          questions,
+          duration: durationInMinutes
         })
+        
+        // Set initial duration and time left
+        setInitialDuration(durationInSeconds)
+        setTimeLeft(durationInSeconds)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch test data')
       } finally {
@@ -84,26 +88,34 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
     fetchTestData()
   }, [id])
 
-  // Set timer based on test duration
-  useEffect(() => {
-    if (test && test.duration) {
-      setTimeLeft(test.duration * 60)
-    }
-  }, [test])
-
-  // Format time left as MM:SS
+  // Format time left as HH:MM:SS
   const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
     const remainingSeconds = seconds % 60
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
   }
 
-  // Handle timer
+  // Handle timer - only start when test is loaded and duration is set
   useEffect(() => {
-    const timer = setInterval(() => {
+    // Don't start timer if test is not loaded or duration is 0
+    if (!test || initialDuration === 0 || timeLeft === 0) {
+      return
+    }
+
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+    }
+
+    // Start the timer
+    timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          clearInterval(timer)
+          if (timerRef.current) {
+            clearInterval(timerRef.current)
+          }
+          // Call submit directly to avoid dependency issues
           handleSubmitTest()
           return 0
         }
@@ -111,62 +123,13 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
       })
     }, 1000)
 
-    return () => clearInterval(timer)
-  }, [])
-
-  // Handle fullscreen detection
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      const isCurrentlyFullscreen = !!document.fullscreenElement
-      setIsFullscreen(isCurrentlyFullscreen)
-
-      if (!isCurrentlyFullscreen) {
-        setViolations((prev) => [...prev, `Exited fullscreen at ${new Date().toLocaleTimeString()}`])
-        setShowWarning(true)
-
-        // Auto-hide warning after 5 seconds
-        setTimeout(() => {
-          setShowWarning(false)
-        }, 5000)
-      }
-    }
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange)
-
-    // Request fullscreen when component mounts (only if user gesture is available)
-    const requestFullscreen = async () => {
-      try {
-        if (document.documentElement.requestFullscreen) {
-          await document.documentElement.requestFullscreen()
-        }
-      } catch (error) {
-        console.error("Couldn't enter fullscreen mode:", error)
-        // Don't show error to user, just log it
-      }
-    }
-
-    // Only request fullscreen if there's a user gesture available
-    // This will be handled by the start test button instead
-
     return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange)
-    }
-  }, [])
-
-  // Handle visibility change (tab switching)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        setViolations((prev) => [...prev, `Switched tab/window at ${new Date().toLocaleTimeString()}`])
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
       }
     }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange)
-    }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [test, initialDuration])
 
   const handleAnswerChange = (questionId: string, value: any) => {
     setAnswers((prev) => ({
@@ -216,6 +179,15 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
   const handleSubmitTest = async () => {
     try {
+      // Stop the timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+
+      const timeTakenInMinutes = initialDuration > 0 
+        ? Math.floor((initialDuration - timeLeft) / 60)
+        : 0
+
       const response = await fetch(`http://localhost:5000/api/student/tests/${id}/submit`, {
         method: 'POST',
         headers: {
@@ -227,8 +199,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             questionId,
             selectedAnswer: answer
           })),
-          violations,
-          timeTaken: 3600 - timeLeft // or your timer logic
+          timeTaken: timeTakenInMinutes
         })
       })
 
@@ -237,34 +208,57 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
         throw new Error(text || 'Failed to submit test')
       }
 
-      // Redirect to results page
       router.push(`/student/results/${id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit test')
     }
   }
 
-  const getQuestionStatusClass = (questionId: string) => {
-    if (markedForReview.includes(questionId)) {
-      return "bg-amber-100 border-amber-500 text-amber-700"
+  const getQuestionStatus = (questionId: string) => {
+    const isAnswered = answers[questionId] !== undefined
+    const isMarked = markedForReview.includes(questionId)
+    
+    if (isAnswered && isMarked) {
+      return 'answered-marked'
+    } else if (!isAnswered && isMarked) {
+      return 'unanswered-marked'
+    } else if (isAnswered) {
+      return 'answered'
+    } else {
+      return 'unanswered'
     }
-    if (answers[questionId] !== undefined) {
-      return "bg-green-100 border-green-500 text-green-700"
-    }
-    return "bg-gray-100 border-gray-300 text-gray-700"
+  }
+
+  const getStatusCounts = () => {
+    if (!test) return { answered: 0, unanswered: 0, answeredMarked: 0, unansweredMarked: 0 }
+    
+    let answered = 0
+    let unanswered = 0
+    let answeredMarked = 0
+    let unansweredMarked = 0
+
+    test.questions.forEach((q) => {
+      const status = getQuestionStatus(q.id)
+      if (status === 'answered') answered++
+      else if (status === 'unanswered') unanswered++
+      else if (status === 'answered-marked') answeredMarked++
+      else if (status === 'unanswered-marked') unansweredMarked++
+    })
+
+    return { answered, unanswered, answeredMarked, unansweredMarked }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-blue"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
       </div>
     )
   }
 
   if (error || !test) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Alert variant="destructive" className="max-w-md">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error || 'Failed to load test'}</AlertDescription>
@@ -274,184 +268,297 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
   }
 
   const question = test.questions[currentQuestion]
+  const statusCounts = getStatusCounts()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white py-6">
-      {/* Main Header */}
-      <header className="bg-white/80 shadow-lg rounded-b-2xl border-b border-blue-200 sticky top-0 z-20 flex items-center justify-between px-8 py-4 mb-6">
-        <div className="flex items-center gap-2">
-          <GraduationCap className="h-9 w-9 text-blue-700 drop-shadow" />
-          <h1 className="font-semibold text-2xl md:text-3xl tracking-wide">
-            <span className="text-green-600">JMIT</span>
-            <span className="text-blue-500"> Online Aptitude Test System</span>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 flex flex-col">
+      <style jsx global>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+        }
+
+        .question-badge {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transform-style: preserve-3d;
+        }
+
+        .question-badge:hover {
+          transform: translateY(-3px) translateZ(5px) rotateY(5deg);
+        }
+
+        .option-item {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transform-style: preserve-3d;
+        }
+
+        .option-item:hover {
+          transform: translateX(8px) translateZ(5px);
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .question-nav-btn {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transform-style: preserve-3d;
+        }
+
+        .question-nav-btn:hover {
+          transform: translateY(-3px) translateZ(5px) scale(1.1);
+        }
+
+        .question-nav-btn.active {
+          transform: translateY(-2px) translateZ(10px) scale(1.15);
+        }
+      `}</style>
+
+      {/* Header */}
+      <header className="bg-white/95 backdrop-blur-sm border-b-2 border-gray-200 shadow-md px-8 py-5 flex items-center justify-between">
+        <div className="animate-slide-in">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent">
+            {test.title || "Aptitude Test"}
           </h1>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={async () => {
-              try {
-                if (document.documentElement.requestFullscreen) {
-                  await document.documentElement.requestFullscreen()
-                }
-              } catch (error) {
-                console.error("Couldn't enter fullscreen mode:", error)
-              }
-            }}
-            className="bg-green-100 hover:bg-green-200 px-4 py-2 rounded-full shadow-md border border-green-200 transition-colors duration-200 flex items-center gap-2"
-          >
-            <MonitorSmartphone className="h-4 w-4 text-green-600" />
-            <span className="text-sm font-medium text-green-700">Enter Fullscreen</span>
+        <div className="flex items-center gap-3 animate-fade-in-up">
+          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-5 py-3 rounded-xl flex items-center gap-3 shadow-md border border-gray-200">
+            <Clock className="h-5 w-5 text-blue-600" />
+            <span className="text-base font-semibold text-gray-800">Total time left: {formatTime(timeLeft)}</span>
+            <button className="ml-2 text-gray-400 hover:text-gray-600 transition-colors">
+              <X className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-3 bg-blue-100 px-5 py-2 rounded-full shadow-md border border-blue-200">
-            <Clock className="h-5 w-5 text-blue-600 mr-2" />
-            <span className="font-bold text-lg text-blue-700 tracking-wider">{formatTime(timeLeft)}</span>
           </div>
         </div>
       </header>
-      <div className="flex h-[calc(100vh-7rem)]">
-        {/* Question navigation sidebar */}
-        <aside className="w-20 md:w-64 bg-white/90 border-r border-blue-100 shadow-lg rounded-2xl m-2 p-4 flex flex-col items-center">
-          <div className="mb-4 w-full">
-            <h2 className="text-sm font-semibold text-blue-600 mb-2 text-center">Question Navigator</h2>
-            <div className="grid grid-cols-5 gap-2">
-              {test.questions.map((q, index) => (
-                <button
-                  key={q.id}
-                  className={`h-10 w-10 flex items-center justify-center rounded-xl border-2 font-semibold shadow-md transition-all duration-150 hover:scale-105 hover:border-blue-400 ${getQuestionStatusClass(q.id)} ${
-                    currentQuestion === index ? "ring-2 ring-blue-400 scale-110" : ""
-                  }`}
-                  onClick={() => setCurrentQuestion(index)}
-                >
-                  {index + 1}
-                </button>
-              ))}
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto bg-white/80 backdrop-blur-sm p-8 pl-10">
+          <div className="w-full">
+            {/* Question Header */}
+            <div className="flex items-center gap-3 mb-8 animate-fade-in-up">
+              <div className="question-badge flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 border-3 border-yellow-600 shadow-lg">
+                <span className="text-white font-bold text-lg">{currentQuestion + 1}</span>
             </div>
-          </div>
-          <div className="space-y-2 mt-6 w-full">
-            <div className="flex items-center">
-              <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
-              <span className="text-xs">Answered</span>
+              <span className="text-orange-600 font-bold text-2xl">*</span>
+             
+            {/* Question Text */}
+            <div className="mb-4 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+              <p className="text-2xl md:text-3xl text-gray-600 leading-relaxed font-medium">{question.text}</p>
             </div>
-            <div className="flex items-center">
-              <div className="h-3 w-3 rounded-full bg-amber-500 mr-2"></div>
-              <span className="text-xs">Marked for Review</span>
             </div>
-            <div className="flex items-center">
-              <div className="h-3 w-3 rounded-full bg-gray-300 mr-2"></div>
-              <span className="text-xs">Not Answered</span>
-            </div>
-          </div>
-        </aside>
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-8">
-          <Card className="mb-8 shadow-2xl rounded-2xl border-blue-100 bg-white/95">
-            <CardContent className="p-8">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-blue-800 drop-shadow">Question {currentQuestion + 1} of {test.questions.length}</h2>
-                <div>
-                  {markedForReview.includes(question.id) ? (
-                    <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-500">
-                      Marked for Review
-                    </Badge>
-                  ) : null}
-                </div>
-              </div>
-              <div className="mb-8">
-                <p className="text-lg font-medium text-gray-800">{question.text}</p>
-              </div>
-              {/* Question type: MCQ */}
+
+            {/* Options */}
               {question.type === "mcq" && question.options && (
                 <RadioGroup
                   value={answers[question.id]?.toString() || ""}
                   onValueChange={(value) => handleAnswerChange(question.id, value)}
-                  className="space-y-4"
+                className="space-y-5 mb-10"
                 >
                   {question.options.map((option, idx) => (
-                    <div key={idx} className="flex items-center space-x-3">
-                      <RadioGroupItem value={option} id={`option-${question.id}-${idx}`} />
-                      <Label htmlFor={`option-${question.id}-${idx}`}>{option}</Label>
+                  <div 
+                    key={idx} 
+                    className="option-item flex items-center space-x-4 p-5 bg-gradient-to-r from-white to-gray-50/50 hover:from-blue-50 hover:to-indigo-50/50 rounded-xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg cursor-pointer"
+                    style={{ animationDelay: `${idx * 0.1}s` }}
+                  >
+                    <RadioGroupItem value={option} id={`option-${question.id}-${idx}`} className="w-5 h-5" />
+                    <Label htmlFor={`option-${question.id}-${idx}`} className="flex-1 cursor-pointer text-gray-800 text-lg font-medium">
+                      {option}
+                    </Label>
                     </div>
                   ))}
                 </RadioGroup>
               )}
-              {/* Question type: MSQ */}
+
               {question.type === "msq" && question.options && (
-                <div className="space-y-4">
+              <div className="space-y-5 mb-10">
                   {question.options.map((option, idx) => (
-                    <div key={idx} className="flex items-center space-x-3">
+                  <div 
+                    key={idx} 
+                    className="option-item flex items-center space-x-4 p-5 bg-gradient-to-r from-white to-gray-50/50 hover:from-blue-50 hover:to-indigo-50/50 rounded-xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg cursor-pointer"
+                    style={{ animationDelay: `${idx * 0.1}s` }}
+                  >
                       <Checkbox
                         id={`msq-option-${question.id}-${idx}`}
                         checked={(answers[question.id] || []).includes(option)}
                         onCheckedChange={() => handleMSQChange(question.id, option)}
+                      className="w-5 h-5"
                       />
-                      <Label htmlFor={`msq-option-${question.id}-${idx}`}>{option}</Label>
+                    <Label htmlFor={`msq-option-${question.id}-${idx}`} className="flex-1 cursor-pointer text-gray-800 text-lg font-medium">
+                      {option}
+                    </Label>
                     </div>
                   ))}
                 </div>
               )}
-              {/* Question type: NAT */}
+
               {question.type === "nat" && (
-                <div className="space-y-2">
-                  <Label htmlFor={`nat-answer-${question.id}`}>Your Answer</Label>
+              <div className="mb-10">
                   <Input
                     id={`nat-answer-${question.id}`}
                     value={answers[question.id] || ""}
                     onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                     placeholder="Enter your answer"
-                    className="max-w-xs"
+                  className="max-w-lg text-lg p-4 border-2 border-gray-300 focus:border-blue-500 rounded-xl"
                   />
                 </div>
               )}
-            </CardContent>
-          </Card>
-          <div className="flex justify-between">
-            <div className="space-x-2">
-              <Button variant="outline" onClick={handlePrevQuestion} disabled={currentQuestion === 0}>
+
+            {/* Mark for Review */}
+            <div className="flex justify-end animate-fade-in-up mb-8" style={{ animationDelay: '0.3s' }}>
+              <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <Checkbox
+                  checked={markedForReview.includes(question.id)}
+                  onCheckedChange={handleMarkForReview}
+                  className="w-5 h-5"
+                />
+                <span className="text-base font-medium text-gray-700 group-hover:text-blue-600 transition-colors">Mark for Review</span>
+              </label>
+            </div>
+        
+            <hr></hr>
+
+            {/* Footer Buttons */}
+            <div className="border-t-2 border-gray-200 pt-6 mt-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+              <div className="flex items-center justify-between">
+                <button className="text-lg font-medium text-gray-600 hover:text-gray-900 flex items-center gap-2 transition-colors group">
+                  <AlertTriangle className="h-6 w-6 group-hover:text-red-600 transition-colors" />
+                  Report content
+                </button>
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={handleSubmitTest}
+                    className="border-green-500 text-green-700 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-900 transition-all text-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                  >
+                    Submit Test
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevQuestion}
+                    disabled={currentQuestion === 0}
+                    className="border-2 border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-7 py-3 text-lg font-medium transition-all duration-200"
+                  >
                 Previous
               </Button>
               <Button
-                variant={markedForReview.includes(question.id) ? "default" : "outline"}
-                onClick={handleMarkForReview}
-                className={markedForReview.includes(question.id) ? "bg-amber-500 hover:bg-amber-600" : ""}
+                    onClick={handleNextQuestion}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-9 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
               >
-                {markedForReview.includes(question.id) ? "Unmark for Review" : "Mark for Review"}
+                    {currentQuestion < test.questions.length - 1 ? "Save & Next" : "Submit"}
               </Button>
             </div>
-            <div className="space-x-2">
-              {currentQuestion < test.questions.length - 1 ? (
-                <Button onClick={handleNextQuestion} className="bg-primary-blue hover:bg-blue-700">
-                  Save & Next
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmitTest}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                >
-                  Submit Test
-                </Button>
-              )}
+              </div> 
             </div>
           </div>
         </main>
+        
+        {/* Sidebar */}
+        <aside className="w-[500px] bg-white/95 backdrop-blur-sm border-l-2 border-gray-200 shadow-xl overflow-y-auto">
+          <div className="p-8">
+            {/* Question Status Summary */}
+            <div className="mb-8 space-y-4 bg-gradient-to-br from-gray-50 to-blue-50/30 p-6 rounded-xl border border-gray-200">
+              <div className="flex items-center gap-3 text-lg">
+                <div className="w-6 h-6 rounded-full bg-blue-600 shadow-sm"></div>
+                <span className="text-gray-800 font-medium">{statusCounts.answered} Answered</span>
+              </div>
+              <div className="flex items-center gap-3 text-lg">
+                <div className="w-6 h-6 rounded-full border-2 border-gray-400 bg-white shadow-sm"></div>
+                <span className="text-gray-800 font-medium">{statusCounts.unanswered} Unanswered</span>
+              </div>
+              <div className="flex items-center gap-3 text-lg">
+                <div className="relative">
+                  <div className="w-6 h-6 rounded-full bg-blue-600 shadow-sm"></div>
+                  <CheckCircle2 className="h-5 w-5 text-green-500 fill-green-500 absolute -bottom-0.5 -right-0.5" />
+                </div>
+                <span className="text-gray-800 font-medium">{statusCounts.answeredMarked} Answered & marked</span>
+              </div>
+              <div className="flex items-center gap-3 text-lg">
+                <div className="relative">
+                  <div className="w-6 h-6 rounded-full border-2 border-gray-400 bg-white shadow-sm"></div>
+                  <CheckCircle2 className="h-5 w-5 text-green-500 fill-green-500 absolute -bottom-0.5 -right-0.5" />
+                </div>
+                <span className="text-gray-800 font-medium">{statusCounts.unansweredMarked} Unanswered & marked</span>
+              </div>
+            </div>
+
+            {/* Question Navigation */}
+            <div className="mb-8">
+              <h3 className="text-xl font-bold text-gray-800 mb-5">Choose a question</h3>
+              <div className="grid grid-cols-5 gap-3">
+                {test.questions.map((q, index) => {
+                  const status = getQuestionStatus(q.id)
+                  const isCurrent = currentQuestion === index
+                  
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentQuestion(index)}
+                      className={`
+                        question-nav-btn relative w-14 h-14 rounded-full border-2 font-bold text-lg
+                        flex items-center justify-center shadow-md
+                        ${
+                          isCurrent
+                            ? 'bg-white border-blue-600 text-blue-600 ring-4 ring-blue-200 shadow-lg'
+                            : status === 'answered'
+                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 border-blue-600 text-white shadow-lg'
+                            : status === 'answered-marked'
+                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 border-blue-600 text-white shadow-lg'
+                            : status === 'unanswered-marked'
+                            ? 'bg-white border-gray-400 text-gray-700'
+                            : 'bg-white border-gray-300 text-gray-700'
+                        }
+                      `}
+                    >
+                      <span className={isCurrent ? 'text-blue-600 font-bold' : status === 'answered' || status === 'answered-marked' ? 'text-white font-bold' : 'text-gray-700 font-semibold'}>
+                        {index + 1}
+                      </span>
+                      <span className={`absolute -top-1 -right-1 text-base font-bold ${isCurrent ? 'text-blue-600' : status === 'answered' || status === 'answered-marked' ? 'text-white' : 'text-gray-700'}`}>*</span>
+                      {status === 'answered-marked' && (
+                        <CheckCircle2 className="absolute -bottom-0.5 -right-0.5 h-4 w-4 text-green-500 fill-green-500" />
+                      )}
+                      {status === 'unanswered-marked' && (
+                        <CheckCircle2 className="absolute -bottom-0.5 -right-0.5 h-4 w-4 text-green-500 fill-green-500" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Instruction */}
+            <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl p-5 shadow-md">
+              <p className="text-base font-medium text-red-700 leading-relaxed">
+                Provide a response to the question marked with an asterisk (*), as it is a mandatory requirement.
+              </p>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   )
-}
-
-function Badge({
-  children,
-  className,
-  variant = "default",
-}: {
-  children: React.ReactNode
-  className?: string
-  variant?: "default" | "outline"
-}) {
-  const baseClasses = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-  const variantClasses = {
-    default: "bg-primary-blue text-white",
-    outline: "border",
-  }
-
-  return <span className={`${baseClasses} ${variantClasses[variant]} ${className || ""}`}>{children}</span>
 }
