@@ -5,11 +5,10 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { BookOpen, ArrowLeft, Eye, EyeOff, AlertCircle } from "lucide-react"
+import { BookOpen, Eye, EyeOff, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { API_BASE_URL } from "@/app/config/api"
 
@@ -82,16 +81,17 @@ export default function FacultyLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col items-center justify-center">
-      <div className="w-full max-w-md mx-auto bg-white/95 rounded-2xl shadow-2xl border border-blue-100 p-10 hover:scale-[1.02] hover:shadow-blue-200 transition-all animate-fade-in">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50/70 to-white flex flex-col items-center justify-center py-10 px-4">
+      <div className="w-full max-w-md mx-auto" style={{ perspective: "1600px" }}>
+        <div className="bg-white/95 rounded-[28px] shadow-[0_25px_80px_rgba(15,23,42,0.12)] border border-white/60 p-8 sm:p-10 transition-transform duration-500 hover:-translate-y-1.5 hover:rotate-x-1 hover:-rotate-y-2">
         <form onSubmit={handleSubmit} className="flex flex-col gap-8">
           <div className="flex flex-col items-center mb-2">
-            <BookOpen className="h-12 w-12 text-[#0074b7] mb-2" />
-            <h2 className="text-3xl md:text-4xl font-bold text-[#22223b] mb-2">Faculty Login</h2>
-            <p className="text-[#4a4e69] text-base mb-4 text-center">Enter your email and password to access your faculty dashboard</p>
+            <BookOpen className="h-12 w-12 text-[#0074b7] mb-3 drop-shadow" />
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#22223b] mb-2 text-center">Faculty Login</h2>
+            <p className="text-[#4a4e69] text-sm sm:text-base mb-4 text-center">Enter your email and password to access your faculty dashboard</p>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email" className="font-semibold text-lg text-[#4a4e69]">Email</Label>
+            <Label htmlFor="email" className="font-semibold text-base sm:text-lg text-[#4a4e69]">Email</Label>
             <Input
               id="email"
               name="email"
@@ -99,14 +99,14 @@ export default function FacultyLogin() {
               placeholder="Enter your email"
               value={formData.email}
               onChange={handleChange}
-              className="focus:ring-4 focus:ring-blue-200/70 transition-all duration-200 border border-gray-300 rounded-md py-4 text-lg"
+              className="focus:ring-4 focus:ring-blue-200/70 transition-all duration-200 border border-gray-200 rounded-xl py-3 sm:py-4 text-base sm:text-lg"
               required
             />
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="font-semibold text-lg text-[#4a4e69]">Password</Label>
-              <Link href="/faculty/forgot-password" className="text-[#0074b7] hover:underline text-sm font-semibold">Forgot Password?</Link>
+              <Label htmlFor="password" className="font-semibold text-base sm:text-lg text-[#4a4e69]">Password</Label>
+              <Link href="/faculty/forgot-password" className="text-[#0074b7] hover:underline text-xs sm:text-sm font-semibold">Forgot Password?</Link>
             </div>
             <div className="relative">
               <Input
@@ -116,14 +116,14 @@ export default function FacultyLogin() {
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
-                className="focus:ring-4 focus:ring-blue-200/70 transition-all duration-200 border border-gray-300 rounded-md py-4 text-lg pr-10"
+                className="focus:ring-4 focus:ring-blue-200/70 transition-all duration-200 border border-gray-200 rounded-xl py-3 sm:py-4 text-base sm:text-lg pr-12"
                 required
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute right-0 top-0 h-full px-3"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 text-slate-500 hover:text-slate-700"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
               >
@@ -139,7 +139,7 @@ export default function FacultyLogin() {
           )}
           <Button
             type="submit"
-            className="w-full bg-[#0074b7] hover:bg-[#005fa3] text-white font-bold py-4 text-xl rounded-md focus:ring-2 focus:ring-blue-400 transition-all duration-200 relative overflow-hidden group"
+            className="w-full bg-gradient-to-r from-[#0074b7] to-[#005fa3] hover:shadow-lg text-white font-bold py-3.5 sm:py-4 text-lg rounded-xl focus:ring-2 focus:ring-blue-400 transition-all duration-200 relative overflow-hidden group"
             disabled={isLoading}
           >
             {isLoading ? "Logging in..." : "Login"}
@@ -152,6 +152,7 @@ export default function FacultyLogin() {
             </Link>
           </div>
         </form>
+      </div>
       </div>
     </div>
   )
