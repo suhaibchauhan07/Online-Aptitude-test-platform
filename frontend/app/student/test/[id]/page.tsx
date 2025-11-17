@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Clock, AlertCircle, X, CheckCircle2, AlertTriangle, Flag } from "lucide-react"
+import API_BASE_URL from "@/app/config/api"
 
 interface Question {
   id: string
@@ -42,7 +43,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     const fetchTestData = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/student/tests/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/student/tests/${id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -54,7 +55,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
         const data = await response.json()
 
-        const questionsRes = await fetch(`http://localhost:5000/api/student/tests/${id}/questions`, {
+        const questionsRes = await fetch(`${API_BASE_URL}/student/tests/${id}/questions`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -188,7 +189,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
         ? Math.floor((initialDuration - timeLeft) / 60)
         : 0
 
-      const response = await fetch(`http://localhost:5000/api/student/tests/${id}/submit`, {
+      const response = await fetch(`${API_BASE_URL}/student/tests/${id}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

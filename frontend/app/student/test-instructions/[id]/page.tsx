@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Clock, AlertTriangle, CheckCircle, MonitorSmartphone, MousePointer2, Ban } from "lucide-react"
+import API_BASE_URL from "@/app/config/api"
 
 export default function TestInstructions({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = use(params)
@@ -20,7 +21,7 @@ export default function TestInstructions({ params }: { params: Promise<{ id: str
 	useEffect(() => {
 		const fetchTestDetails = async () => {
 			try {
-				const response = await fetch(`http://localhost:5000/api/student/tests/${id}`, {
+				const response = await fetch(`${API_BASE_URL}/student/tests/${id}`, {
 					headers: {
 						Authorization: `Bearer ${localStorage.getItem('token')}`
 					}
@@ -40,7 +41,7 @@ export default function TestInstructions({ params }: { params: Promise<{ id: str
 		setLoading(true)
 		try {
 			// Create/continue attempt before navigating to the test page
-			const res = await fetch(`http://localhost:5000/api/student/tests/${id}/start`, {
+			const res = await fetch(`${API_BASE_URL}/student/tests/${id}/start`, {
 				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${localStorage.getItem('token')}`
