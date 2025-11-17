@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
+import API_BASE_URL from "@/app/config/api"
 
 interface Test {
   _id: string
@@ -26,7 +25,7 @@ export default function AvailableTestsPage() {
   useEffect(() => {
     const fetchAvailableTests = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/student/tests/available", {
+        const response = await fetch(`${API_BASE_URL}/student/tests/available`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`
           }
@@ -59,7 +58,7 @@ export default function AvailableTestsPage() {
 
   const handleStartTest = async (testId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/student/tests/${testId}/start`, {
+      const response = await fetch(`${API_BASE_URL}/student/tests/${testId}/start`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`
