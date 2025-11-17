@@ -34,6 +34,8 @@ const app = express();
 const allowedOrigins = [
     'http://localhost:3000',
     'https://online-aptitude-test-platform.vercel.app',
+    'https://online-aptitude-test-platform-git-main-<team>.vercel.app',
+
     process.env.FRONTEND_ORIGIN
 ].filter(Boolean);
 
