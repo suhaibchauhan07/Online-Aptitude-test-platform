@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, AlertTriangle, Clock, Trophy, Award, Star, TrendingUp, Calendar, Target, Zap, FileText, Brain, Timer, ArrowRight } from "lucide-react";
+import API_BASE_URL from "@/app/config/api"
 
 export default function TestResult({ params }: { params: { id: string } }) {
 	const id = params.id
@@ -16,7 +17,7 @@ export default function TestResult({ params }: { params: { id: string } }) {
 		const fetchResult = async () => {
 			try {
 				setLoading(true)
-				const response = await fetch(`http://localhost:5000/api/student/tests/${id}/result`, {
+					const response= await fetch(`${API_BASE_URL}/student/tests/${id}/result`, {
 					headers: {
 						Authorization: `Bearer ${localStorage.getItem('token')}`
 					}

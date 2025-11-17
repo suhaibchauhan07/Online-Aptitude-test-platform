@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, Trophy, ChevronRight, Star, TrendingUp, Award } from "lucide-react"
+import API_BASE_URL from "@/app/config/api"
 
 export default function MyResultsPage() {
   const [results, setResults] = useState<any[]>([])
@@ -16,7 +17,7 @@ export default function MyResultsPage() {
     const fetchResults = async () => {
       try {
         setLoading(true)
-        const res = await fetch('http://localhost:5000/api/student/results', {
+        const res = await fetch(`${API_BASE_URL}/student/results`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         })
         if (!res.ok) throw new Error('Failed to load results')
