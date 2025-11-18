@@ -100,6 +100,7 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
                     <Plus className="h-5 w-5" />
                     <span className="ml-2 hidden md:inline">Create Test</span>
                   </Button>
+                  <NavItem href="/faculty/student-results" icon={<Users className="h-5 w-5" />} label="Student Results" />
                   <NavItem href="/faculty/results" icon={<BarChart2 className="h-5 w-5" />} label="View Results" />
                   <NavItem href="/faculty/settings" icon={<Settings className="h-5 w-5" />} label="Settings" />
                 </div>

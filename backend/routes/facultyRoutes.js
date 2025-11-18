@@ -7,7 +7,10 @@ import {
     createClass, 
     createTest, 
     uploadQuestions,
-    changeFacultyPassword
+    changeFacultyPassword,
+    getAllStudentResults,
+    getStudentResultsByStudentId,
+    getStudentTestResultByStudentAndTest
 } from '../controllers/facultyController.js';
 import uploadMiddleware from '../middleware/uploadMiddleware.js';
 import { authMiddleware, requireRole } from '../middleware/authMiddleware.js';
@@ -25,5 +28,8 @@ router.post('/create-class', authMiddleware, requireRole(['faculty']), createCla
 router.post('/create-test', authMiddleware, requireRole(['faculty']), createTest);
 router.post('/upload-questions', authMiddleware, requireRole(['faculty']), uploadMiddleware.single('file'), uploadQuestions);
 router.post('/change-password', authMiddleware, requireRole(['faculty']), changeFacultyPassword);
+router.get('/student-results', authMiddleware, requireRole(['faculty']), getAllStudentResults);
+router.get('/student-results/:studentId', authMiddleware, requireRole(['faculty']), getStudentResultsByStudentId);
+router.get('/student-results/:studentId/tests/:testId', authMiddleware, requireRole(['faculty']), getStudentTestResultByStudentAndTest);
 
 export default router;

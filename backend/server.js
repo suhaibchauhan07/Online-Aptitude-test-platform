@@ -33,6 +33,7 @@ const app = express();
 // Middleware
 const allowedOrigins = [
     'http://localhost:3000',
+    'http://localhost:3001',
     'https://online-aptitude-test-platform.vercel.app',
     'https://online-aptitude-test-platform-git-main-<team>.vercel.app',
 

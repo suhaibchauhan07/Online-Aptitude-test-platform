@@ -1,6 +1,8 @@
 import Faculty from '../models/Faculty.js';
+import StudentTest from '../models/studentTestModel.js';
+import Student from '../models/Student.js';
 import Test from '../models/Test.js';
-import bcryptjs from 'bcryptjs';
+import bcryptjs from 'bcryptjs'; 
 import jwt from 'jsonwebtoken';
 import xlsx from 'xlsx';
 import TestQuestions from '../models/testQuestions.js';
@@ -162,6 +164,92 @@ export const getFacultyProfile = async (req, res) => {
         console.error('Error fetching faculty profile:', error);
         res.status(500).json({ message: error.message });
     }
+};
+
+// List all completed student results for faculty view
+export const getAllStudentResults = async (req, res) => {
+  try {
+    const results = await StudentTest.find({ status: 'completed' })
+      .sort({ completedAt: -1 })
+      .populate({ path: 'studentId', model: Student, select: 'name email rollNo className' })
+      .populate({ path: 'testId', model: Test, select: 'title testName totalMarks startTime' });
+
+    const formatted = results.map((r) => ({
+      _id: r._id,
+      student: r.studentId ? {
+        name: r.studentId.name,
+        email: r.studentId.email,
+        rollNo: r.studentId.rollNo,
+        className: r.studentId.className,
+        id: r.studentId._id,
+      } : null,
+      test: r.testId ? {
+        id: r.testId._id,
+        title: r.testId.title || r.testId.testName || 'Test',
+        totalMarks: r.testId.totalMarks || r.totalMarks,
+        startTime: r.testId.startTime,
+      } : null,
+      totalMarks: r.totalMarks,
+      marksObtained: r.marksObtained,
+      percentage: r.percentage,
+      completedAt: r.completedAt,
+    }));
+
+    res.status(200).json(formatted);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching student results', error: error.message });
+  }
+};
+
+export const getStudentResultsByStudentId = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const results = await StudentTest.find({ studentId, status: 'completed' })
+      .sort({ completedAt: -1 })
+      .populate({ path: 'studentId', model: Student, select: 'name email rollNo className' })
+      .populate({ path: 'testId', model: Test, select: 'title testName totalMarks startTime' });
+    res.status(200).json(results);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching student results', error: error.message });
+  }
+};
+
+export const getStudentTestResultByStudentAndTest = async (req, res) => {
+  try {
+    const { studentId, testId } = req.params;
+    const result = await StudentTest.findOne({ studentId, testId })
+      .populate({ path: 'testId', model: Test, select: 'title duration totalMarks startTime' });
+    if (!result) {
+      return res.status(404).json({ message: 'Result not found' });
+    }
+    const answers = result.answers || [];
+    const correctCount = answers.filter(a => a.isCorrect).length;
+    const incorrectCount = answers.length - correctCount;
+    const accuracyRate = answers.length ? (correctCount / answers.length) * 100 : 0;
+    const test = result.testId || {};
+    const formatted = {
+      _id: result._id,
+      studentId: result.studentId,
+      testId: result.testId,
+      answers: result.answers,
+      totalMarks: result.totalMarks || test.totalMarks,
+      marksObtained: result.marksObtained,
+      percentage: result.percentage,
+      status: result.status,
+      startedAt: result.startedAt,
+      completedAt: result.completedAt,
+      timeTaken: result.timeTaken,
+      correctCount,
+      incorrectCount,
+      accuracyRate,
+      totalQuestions: answers.length,
+      testTitle: test.title || test.testName || 'Test',
+      testDuration: test.duration || 0
+    };
+    res.status(200).json(formatted);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching result', error: error.message });
+  }
 };
  
 export const updateFacultyProfile = async (req, res) => {
