@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Clock, AlertCircle, X, CheckCircle2, AlertTriangle, Flag } from "lucide-react"
+import { Clock, AlertCircle, X, CheckCircle2, AlertTriangle, Flag, Menu } from "lucide-react"
 import API_BASE_URL from "@/app/config/api"
 
 interface Question {
@@ -38,6 +38,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Fetch test data
   useEffect(() => {
@@ -353,6 +354,16 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
               <X className="h-5 w-5" />
           </button>
           </div>
+          <button
+            className="lg:hidden ml-2 px-3 py-2 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95 transition-all"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open questions"
+          >
+            <div className="flex items-center gap-2">
+              <Menu className="h-5 w-5" />
+              <span className="text-sm font-semibold">Questions</span>
+            </div>
+          </button>
         </div>
       </header>
 
@@ -478,8 +489,26 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
           </div>
         </main>
         
-        <aside className="w-full lg:w-[420px] bg-white/95 backdrop-blur-sm border-t-2 lg:border-t-0 lg:border-l-2 border-gray-200 shadow-xl overflow-y-auto">
-          <div className="p-8">
+        <aside
+          className={`
+            w-full lg:w-[420px] bg-white/95 backdrop-blur-sm border-t-2 lg:border-t-0 lg:border-l-2 border-gray-200 shadow-xl overflow-y-auto
+            ${sidebarOpen ? 'fixed inset-0 z-50 lg:static' : 'hidden lg:block'}
+          `}
+        >
+          {sidebarOpen && (
+            <div className="absolute inset-0 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)}></div>
+          )}
+          <div
+            className={`absolute right-0 top-0 h-full w-[90%] max-w-sm bg-white/95 backdrop-blur-sm shadow-2xl transform transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none lg:bg-transparent ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0`}
+            style={{ transformStyle: 'preserve-3d' }}
+          >
+          <div className="p-5 sm:p-8">
+            <div className="flex items-center justify-between lg:hidden mb-3">
+              <h3 className="text-lg font-bold text-gray-800">Navigation</h3>
+              <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 shadow-sm" onClick={() => setSidebarOpen(false)} aria-label="Close questions">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
             {/* Question Status Summary */}
             <div className="mb-8 space-y-4 bg-gradient-to-br from-gray-50 to-blue-50/30 p-6 rounded-xl border border-gray-200">
               <div className="flex items-center gap-3 text-lg">
@@ -509,7 +538,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             {/* Question Navigation */}
             <div className="mb-8">
               <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-5">Choose a question</h3>
-              <div className="grid grid-cols-6 sm:grid-cols-5 gap-2 sm:gap-3">
+              <div className="grid grid-cols-6 sm:grid-cols-5 gap-2 sm:gap-3 max-h-[50vh] lg:max-h-none overflow-y-auto pr-1">
                 {test.questions.map((q, index) => {
                   const status = getQuestionStatus(q.id)
                   const isCurrent = currentQuestion === index
@@ -517,7 +546,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                   return (
                     <button
                       key={q.id}
-                      onClick={() => setCurrentQuestion(index)}
+                      onClick={() => { setCurrentQuestion(index); if (sidebarOpen) setSidebarOpen(false) }}
                       className={`
                         question-nav-btn relative w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 font-bold text-base sm:text-lg
                         flex items-center justify-center shadow-md
@@ -556,6 +585,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                 Provide a response to the question marked with an asterisk (*), as it is a mandatory requirement.
               </p>
             </div>
+          </div>
           </div>
         </aside>
       </div>
