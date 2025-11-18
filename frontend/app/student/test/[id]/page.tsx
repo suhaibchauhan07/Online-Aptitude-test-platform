@@ -1,5 +1,4 @@
 "use client"
-
 import { use, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -34,6 +33,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
   const [markedForReview, setMarkedForReview] = useState<string[]>([])
   const [timeLeft, setTimeLeft] = useState(0)
   const [initialDuration, setInitialDuration] = useState(0)
+  const [timerReady, setTimerReady] = useState(false)
   const [test, setTest] = useState<Test | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -129,8 +129,10 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
           const rawRemaining = Math.floor((endMs - nowMs) / 1000)
           const remainingSeconds = Math.max(0, Math.min(durationInSeconds, rawRemaining))
           setTimeLeft(remainingSeconds)
+          setTimerReady(remainingSeconds > 0)
         } else {
           setTimeLeft(durationInSeconds)
+          setTimerReady(durationInSeconds > 0)
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch test data')
@@ -150,25 +152,22 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
   }
 
-  // Handle timer - start when test is loaded
+  // Handle timer - start when test is loaded and timeLeft initialized
   useEffect(() => {
-    if (!test || initialDuration === 0) {
+    if (!test || initialDuration === 0 || !timerReady) {
       return
     }
 
-    // Clear any existing timer
     if (timerRef.current) {
       clearInterval(timerRef.current)
     }
 
-    // Start the timer
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           if (timerRef.current) {
             clearInterval(timerRef.current)
           }
-          // Call submit directly to avoid dependency issues
           handleSubmitTest()
           return 0
         }
@@ -182,7 +181,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [test, initialDuration])
+  }, [test, initialDuration, timerReady])
 
   const handleAnswerChange = (questionId: string, value: any) => {
     setAnswers((prev) => ({
