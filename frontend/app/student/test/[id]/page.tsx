@@ -78,7 +78,15 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
         })
         
         setInitialDuration(durationInSeconds)
+        const durationMs = durationInMinutes * 60 * 1000
+        const nowMs = Date.now()
         let startMsCandidate: number | undefined
+        const isValidStart = (ts?: number) => {
+          if (typeof ts !== 'number' || Number.isNaN(ts)) return false
+          // Must be in the past and within the window length (not older than duration)
+          return ts <= nowMs && ts >= nowMs - durationMs
+        }
+
         try {
           const availRes = await fetch(`${API_BASE_URL}/student/tests/available`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
@@ -90,31 +98,34 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
               const match = list.find((t: any) => t._id === id || t.id === id)
               if (match?.startTime) {
                 const ts = new Date(match.startTime).getTime()
-                if (!Number.isNaN(ts)) startMsCandidate = ts
+                if (isValidStart(ts)) startMsCandidate = ts
               }
             }
           }
         } catch (_) {}
 
         if (!startMsCandidate) {
-          startMsCandidate = [
-            (testData.startTime && new Date(testData.startTime).getTime()) || null,
-            (() => {
-              const lsVal = localStorage.getItem(`testStart:${id}`)
-              if (lsVal) {
-                const parsed = Number(lsVal)
-                if (!Number.isNaN(parsed)) return parsed
-              }
-              return null
-            })(),
-            (testData.attemptStartTime && new Date(testData.attemptStartTime).getTime()) || null,
-            (testData.startedAt && new Date(testData.startedAt).getTime()) || null,
-          ].find((v) => typeof v === 'number' && !isNaN(v as number)) as number | undefined
+          const testStart = testData.startTime ? new Date(testData.startTime).getTime() : NaN
+          if (isValidStart(testStart)) startMsCandidate = testStart
+        }
+
+        if (!startMsCandidate) {
+          const lsVal = localStorage.getItem(`testStart:${id}`)
+          if (lsVal) {
+            const parsed = Number(lsVal)
+            if (isValidStart(parsed)) startMsCandidate = parsed
+          }
+        }
+
+        if (!startMsCandidate) {
+          const attemptStart = testData.attemptStartTime ? new Date(testData.attemptStartTime).getTime() : NaN
+          const startedAt = testData.startedAt ? new Date(testData.startedAt).getTime() : NaN
+          if (isValidStart(attemptStart)) startMsCandidate = attemptStart
+          else if (isValidStart(startedAt)) startMsCandidate = startedAt
         }
 
         if (startMsCandidate && typeof startMsCandidate === 'number') {
-          const endMs = startMsCandidate + durationInMinutes * 60 * 1000
-          const nowMs = Date.now()
+          const endMs = startMsCandidate + durationMs
           const rawRemaining = Math.floor((endMs - nowMs) / 1000)
           const remainingSeconds = Math.max(0, Math.min(durationInSeconds, rawRemaining))
           setTimeLeft(remainingSeconds)
