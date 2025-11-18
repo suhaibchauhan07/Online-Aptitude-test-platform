@@ -53,15 +53,19 @@ export default function TestInstructions({ params }: { params: Promise<{ id: str
 				throw new Error(errorData.message || 'Failed to start test')
 			}
 			
-			const data = await res.json()
-			console.log('Start test response:', data)
+            const data = await res.json()
+            console.log('Start test response:', data)
 			
 			// Check if the response has the expected structure
-			if (data.status === 'success' && data.data && data.data.attemptId) {
-				router.push(`/student/test/${id}`)
-			} else {
-				throw new Error('Invalid response from server')
-			}
+            if (data.status === 'success' && data.data && data.data.attemptId) {
+                try {
+                    const now = Date.now()
+                    localStorage.setItem(`testStart:${id}`, String(now))
+                } catch (_) {}
+                router.push(`/student/test/${id}`)
+            } else {
+                throw new Error('Invalid response from server')
+            }
 		} catch (e) {
 			console.error('Error starting test:', e)
 			setError(e instanceof Error ? e.message : 'Failed to start test')

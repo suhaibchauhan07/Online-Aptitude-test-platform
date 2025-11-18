@@ -77,9 +77,52 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
           duration: durationInMinutes
         })
         
-        // Set initial duration and time left
+        // Set initial duration and time left based on test start
         setInitialDuration(durationInSeconds)
-        setTimeLeft(durationInSeconds)
+        let startMsCandidate = [
+          // Prefer attempt-specific fields if present
+          (testData.attemptStartTime && new Date(testData.attemptStartTime).getTime()) || null,
+          (testData.startedAt && new Date(testData.startedAt).getTime()) || null,
+          (testData.startTime && new Date(testData.startTime).getTime()) || null,
+        ].find((v) => typeof v === 'number' && !isNaN(v as number)) as number | undefined
+
+        // Fallback: try to read from localStorage if we previously stored it
+        if (!startMsCandidate) {
+          const lsVal = localStorage.getItem(`testStart:${id}`)
+          if (lsVal) {
+            const parsed = Number(lsVal)
+            if (!Number.isNaN(parsed)) startMsCandidate = parsed
+          }
+        }
+
+        // Fallback: query available tests to find startTime for this test
+        if (!startMsCandidate) {
+          try {
+            const availRes = await fetch(`${API_BASE_URL}/student/tests/available`, {
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            })
+            if (availRes.ok) {
+              const availData = await availRes.json()
+              const list = Array.isArray(availData) ? availData : availData?.data
+              if (Array.isArray(list)) {
+                const match = list.find((t: any) => t._id === id || t.id === id)
+                if (match?.startTime) {
+                  const ts = new Date(match.startTime).getTime()
+                  if (!Number.isNaN(ts)) startMsCandidate = ts
+                }
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (startMsCandidate && typeof startMsCandidate === 'number') {
+          const endMs = startMsCandidate + durationInMinutes * 60 * 1000
+          const nowMs = Date.now()
+          const remainingSeconds = Math.max(0, Math.floor((endMs - nowMs) / 1000))
+          setTimeLeft(remainingSeconds)
+        } else {
+          setTimeLeft(durationInSeconds)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch test data')
       } finally {
@@ -350,9 +393,6 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
           <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl flex items-center gap-3 shadow-md border border-gray-200">
             <Clock className="h-5 w-5 text-blue-600" />
             <span className="text-sm sm:text-base font-semibold text-gray-800">Total time left: {formatTime(timeLeft)}</span>
-            <button className="ml-2 text-gray-400 hover:text-gray-600 transition-colors">
-              <X className="h-5 w-5" />
-          </button>
           </div>
           <button
             className="lg:hidden ml-2 px-3 py-2 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95 transition-all"
@@ -501,7 +541,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             <div className="absolute inset-0 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)}></div>
           )}
           <div
-            className={`absolute right-0 top-0 h-full w-[90%] max-w-sm bg-white/95 backdrop-blur-sm shadow-2xl transform transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none lg:bg-transparent ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0`}
+            className={`absolute right-0 top-0 h-full w-[90%] max-w-sm bg-white/95 backdrop-blur-sm shadow-2xl transform transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none lg:bg-transparent lg:w-full lg:max-w-none ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0`}
             style={{ transformStyle: 'preserve-3d' }}
           >
           <div className="p-5 sm:p-8">

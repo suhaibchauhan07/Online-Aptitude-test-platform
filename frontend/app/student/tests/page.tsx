@@ -82,6 +82,10 @@ export default function AvailableTestsPage() {
       
       // Check if the response has the expected structure
       if (data.status === 'success' && data.data && data.data.attemptId) {
+        try {
+          const now = Date.now()
+          localStorage.setItem(`testStart:${testId}`, String(now))
+        } catch (_) {}
         router.push(`/student/test/${testId}`)
       } else {
         setError("Failed to start test - invalid response from server")
