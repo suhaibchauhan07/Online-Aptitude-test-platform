@@ -85,10 +85,10 @@ export default function FacultyDashboard() {
   ]
 
   return (
-    <div className="container py-6">
-      <h1 className="text-2xl font-bold mb-6">Faculty Dashboard</h1>
+    <div className="container py-6 px-4 sm:px-6">
+      <h1 className="text-xl sm:text-2xl font-bold mb-6">Faculty Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-8">
         <StatsCard
           title="Total Students"
           value="245"
@@ -117,11 +117,11 @@ export default function FacultyDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Active Tests */}
-        <Card>
+        <Card className="bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-transform duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle>Active Tests</CardTitle>
-              <CardDescription>Currently active and scheduled tests</CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Active Tests</CardTitle>
+              <CardDescription className="text-sm">Currently active and scheduled tests</CardDescription>
             </div>
             <Button
               size="sm"
@@ -135,9 +135,9 @@ export default function FacultyDashboard() {
             {activeTests.length > 0 ? (
               <div className="space-y-4">
                 {activeTests.map((test) => (
-                  <div key={test.id} className="bg-white/60 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-5 hover:scale-[1.03] hover:shadow-blue-200 transition-all duration-300">
+                  <div key={test.id} className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-5 hover:scale-[1.03] hover:shadow-blue-200 transition-all duration-300">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium">{test.title}</h3>
+                      <h3 className="font-medium text-base sm:text-lg">{test.title}</h3>
                       <UIBadge className={test.status === "active" ? "bg-green-600" : "bg-primary-blue"}>
                         {test.status === "active" ? "Active" : "Scheduled"}
                       </UIBadge>
@@ -187,11 +187,11 @@ export default function FacultyDashboard() {
         </Card>
 
         {/* Recent Results */}
-        <Card>
+        <Card className="bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-transform duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle>Recent Results</CardTitle>
-              <CardDescription>Performance in recent tests</CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Recent Results</CardTitle>
+              <CardDescription className="text-sm">Performance in recent tests</CardDescription>
             </div>
             <Button asChild size="sm" variant="outline">
               <Link href="/faculty/results">View All</Link>
@@ -201,9 +201,9 @@ export default function FacultyDashboard() {
             {recentResults.length > 0 ? (
               <div className="space-y-4">
                 {recentResults.map((result) => (
-                  <div key={result.id} className="bg-white/60 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-5 hover:scale-[1.03] hover:shadow-blue-200 transition-all duration-300">
+                  <div key={result.id} className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-5 hover:scale-[1.03] hover:shadow-blue-200 transition-all duration-300">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium">{result.title}</h3>
+                      <h3 className="font-medium text-base sm:text-lg">{result.title}</h3>
                       <span className="text-sm text-gray-500">{result.date}</span>
                     </div>
                     <p className="text-sm text-gray-500 mb-3">{result.class}</p>
@@ -250,11 +250,11 @@ export default function FacultyDashboard() {
       </div>
 
       {/* Analytics Preview */}
-      <div className="mt-6">
-        <Card>
+      <div className="mt-6 px-1">
+        <Card className="bg-white/80 backdrop-blur-md shadow-xl">
           <CardHeader>
-            <CardTitle>Performance Analytics</CardTitle>
-            <CardDescription>Overview of student performance across tests</CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Performance Analytics</CardTitle>
+            <CardDescription className="text-sm">Overview of student performance across tests</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80 flex items-center justify-center bg-gray-50 rounded-lg border border-dashed">
@@ -313,16 +313,17 @@ function StatsCard({ title, value, description, icon }: {
   const num = match ? parseInt(match[1]) : 0;
   const suffix = match ? match[2] : "";
   return (
-    <Card className="bg-white/60 backdrop-blur-md shadow-2xl rounded-3xl border border-blue-100 hover:scale-105 hover:shadow-blue-200 transition-all duration-300">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-blue-900 drop-shadow">{title}</CardTitle>
-        <div className="transition-transform duration-300 group-hover:scale-110 animate-bounce-slow">{icon}</div>
+    <Card className="group relative overflow-hidden border-0 rounded-2xl bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transform hover:scale-[1.03] transition-all duration-300">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+        <CardTitle className="text-xs sm:text-sm font-medium text-blue-900 drop-shadow">{title}</CardTitle>
+        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 text-primary-blue shadow-sm">{icon}</div>
       </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-extrabold text-blue-900 mb-1">
+      <CardContent className="relative z-10">
+        <div className="text-2xl sm:text-3xl font-extrabold text-blue-900 mb-1">
           <AnimatedCounter end={num} suffix={suffix} />
         </div>
-        <p className="text-xs text-blue-700 font-medium">{description}</p>
+        <p className="text-xs sm:text-sm text-blue-700 font-medium">{description}</p>
       </CardContent>
     </Card>
   )

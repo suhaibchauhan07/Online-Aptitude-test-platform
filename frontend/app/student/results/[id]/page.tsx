@@ -13,7 +13,7 @@ export default function TestResult({ params }: { params: { id: string } }) {
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
+	useEffect(() => { 
 		const fetchResult = async () => {
 			try {
 				setLoading(true)

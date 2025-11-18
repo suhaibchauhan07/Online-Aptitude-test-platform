@@ -64,10 +64,10 @@ export default function CreateTest() {
     }
 
     return (
-        <div className="container py-8">
-            <Card>
+        <div className="container py-8 px-4 sm:px-6">
+            <Card className="bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-transform duration-300 rounded-2xl">
                 <CardHeader>
-                    <CardTitle>Create New Test</CardTitle>
+                    <CardTitle className="text-lg sm:text-xl">Create New Test</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -100,7 +100,7 @@ export default function CreateTest() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="duration">Duration (minutes)</Label>
                                 <Input
@@ -128,7 +128,7 @@ export default function CreateTest() {
                             </div>
                         </div>
 
-                        <Button type="submit" disabled={isLoading}>
+                        <Button type="submit" disabled={isLoading} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl">
                             {isLoading ? 'Creating...' : 'Create Test'}
                         </Button>
                     </form>
@@ -142,4 +142,4 @@ export default function CreateTest() {
             )}
         </div>
     )
-} 
+}

@@ -112,9 +112,9 @@ export default function AvailableTestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white py-10 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-extrabold text-blue-900 mb-10 drop-shadow-lg text-center">Available Tests</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-900 mb-8 drop-shadow-lg text-center">Available Tests</h1>
         {tests.length === 0 ? (
           <div className="text-center text-gray-600">No available tests at the moment.</div>
         ) : (
@@ -128,13 +128,13 @@ export default function AvailableTestsPage() {
               const isTestExpired = now > endTime
               
               return (
-                <div key={test._id} className={`bg-white/90 rounded-2xl shadow-2xl border p-6 flex flex-col transition-transform hover:scale-[1.02] ${
+                <div key={test._id} className={`bg-white/80 backdrop-blur-md rounded-2xl shadow-xl hover:shadow-2xl border p-5 sm:p-6 flex flex-col transition-transform hover:scale-[1.02] sm:max-w-md sm:mx-auto ${
                   isTestAvailable ? 'border-green-200 bg-green-50/30' : 
                   isTestUpcoming ? 'border-yellow-200 bg-yellow-50/30' : 
                   'border-red-200 bg-red-50/30'
                 }`}>
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-xl font-bold text-gray-900 flex-1">{test.title}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex-1">{test.title}</h2>
                     <div className={`px-3 py-1 rounded-full text-xs font-semibold ml-2 ${
                       isTestAvailable ? 'bg-green-100 text-green-700' : 
                       isTestUpcoming ? 'bg-yellow-100 text-yellow-700' : 
@@ -188,4 +188,4 @@ export default function AvailableTestsPage() {
       </div>
     </div>
   )
-} 
+}

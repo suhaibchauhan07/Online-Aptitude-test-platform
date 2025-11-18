@@ -339,16 +339,16 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
       `}</style>
 
       {/* Header */}
-      <header className="bg-white/95 backdrop-blur-sm border-b-2 border-gray-200 shadow-md px-8 py-5 flex items-center justify-between">
+      <header className="bg-white/95 backdrop-blur-sm border-b-2 border-gray-200 shadow-md px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
         <div className="animate-slide-in">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent">
             {test.title || "Aptitude Test"}
           </h1>
         </div>
         <div className="flex items-center gap-3 animate-fade-in-up">
-          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-5 py-3 rounded-xl flex items-center gap-3 shadow-md border border-gray-200">
+          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl flex items-center gap-3 shadow-md border border-gray-200">
             <Clock className="h-5 w-5 text-blue-600" />
-            <span className="text-base font-semibold text-gray-800">Total time left: {formatTime(timeLeft)}</span>
+            <span className="text-sm sm:text-base font-semibold text-gray-800">Total time left: {formatTime(timeLeft)}</span>
             <button className="ml-2 text-gray-400 hover:text-gray-600 transition-colors">
               <X className="h-5 w-5" />
           </button>
@@ -356,20 +356,20 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-white/80 backdrop-blur-sm p-8 pl-10">
+        <main className="flex-1 overflow-y-auto bg-white/80 backdrop-blur-sm p-5 sm:p-8 sm:pl-10">
           <div className="w-full">
             {/* Question Header */}
             <div className="flex items-center gap-3 mb-8 animate-fade-in-up">
-              <div className="question-badge flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 border-3 border-yellow-600 shadow-lg">
-                <span className="text-white font-bold text-lg">{currentQuestion + 1}</span>
-            </div>
-              <span className="text-orange-600 font-bold text-2xl">*</span>
+              <div className="question-badge flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 border-3 border-yellow-600 shadow-lg">
+                <span className="text-white font-bold text-base sm:text-lg">{currentQuestion + 1}</span>
+              </div>
+              <span className="text-orange-600 font-bold text-xl sm:text-2xl">*</span>
              
             {/* Question Text */}
             <div className="mb-4 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-              <p className="text-2xl md:text-3xl text-gray-600 leading-relaxed font-medium">{question.text}</p>
+              <p className="text-xl sm:text-2xl md:text-3xl text-gray-600 leading-relaxed font-medium">{question.text}</p>
             </div>
             </div>
 
@@ -378,16 +378,16 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                 <RadioGroup
                   value={answers[question.id]?.toString() || ""}
                   onValueChange={(value) => handleAnswerChange(question.id, value)}
-                className="space-y-5 mb-10"
+                className="space-y-4 sm:space-y-5 mb-8 sm:mb-10"
                 >
                   {question.options.map((option, idx) => (
                   <div 
                     key={idx} 
-                    className="option-item flex items-center space-x-4 p-5 bg-gradient-to-r from-white to-gray-50/50 hover:from-blue-50 hover:to-indigo-50/50 rounded-xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg cursor-pointer"
+                    className="option-item flex items-center space-x-3 sm:space-x-4 p-4 sm:p-5 bg-gradient-to-r from-white to-gray-50/50 hover:from-blue-50 hover:to-indigo-50/50 rounded-xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg cursor-pointer"
                     style={{ animationDelay: `${idx * 0.1}s` }}
                   >
                     <RadioGroupItem value={option} id={`option-${question.id}-${idx}`} className="w-5 h-5" />
-                    <Label htmlFor={`option-${question.id}-${idx}`} className="flex-1 cursor-pointer text-gray-800 text-lg font-medium">
+                    <Label htmlFor={`option-${question.id}-${idx}`} className="flex-1 cursor-pointer text-gray-800 text-base sm:text-lg font-medium">
                       {option}
                     </Label>
                     </div>
@@ -396,11 +396,11 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
               )}
 
               {question.type === "msq" && question.options && (
-              <div className="space-y-5 mb-10">
+              <div className="space-y-4 sm:space-y-5 mb-8 sm:mb-10">
                   {question.options.map((option, idx) => (
                   <div 
                     key={idx} 
-                    className="option-item flex items-center space-x-4 p-5 bg-gradient-to-r from-white to-gray-50/50 hover:from-blue-50 hover:to-indigo-50/50 rounded-xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg cursor-pointer"
+                    className="option-item flex items-center space-x-3 sm:space-x-4 p-4 sm:p-5 bg-gradient-to-r from-white to-gray-50/50 hover:from-blue-50 hover:to-indigo-50/50 rounded-xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg cursor-pointer"
                     style={{ animationDelay: `${idx * 0.1}s` }}
                   >
                       <Checkbox
@@ -409,7 +409,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                         onCheckedChange={() => handleMSQChange(question.id, option)}
                       className="w-5 h-5"
                       />
-                    <Label htmlFor={`msq-option-${question.id}-${idx}`} className="flex-1 cursor-pointer text-gray-800 text-lg font-medium">
+                    <Label htmlFor={`msq-option-${question.id}-${idx}`} className="flex-1 cursor-pointer text-gray-800 text-base sm:text-lg font-medium">
                       {option}
                     </Label>
                     </div>
@@ -418,19 +418,19 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
               )}
 
               {question.type === "nat" && (
-              <div className="mb-10">
+              <div className="mb-8 sm:mb-10">
                   <Input
                     id={`nat-answer-${question.id}`}
                     value={answers[question.id] || ""}
                     onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                     placeholder="Enter your answer"
-                  className="max-w-lg text-lg p-4 border-2 border-gray-300 focus:border-blue-500 rounded-xl"
+                  className="w-full max-w-lg text-base sm:text-lg p-3 sm:p-4 border-2 border-gray-300 focus:border-blue-500 rounded-xl"
                   />
                 </div>
               )}
 
             {/* Mark for Review */}
-            <div className="flex justify-end animate-fade-in-up mb-8" style={{ animationDelay: '0.3s' }}>
+            <div className="flex justify-end animate-fade-in-up mb-6 sm:mb-8" style={{ animationDelay: '0.3s' }}>
               <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <Checkbox
                   checked={markedForReview.includes(question.id)}
@@ -444,7 +444,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             <hr></hr>
 
             {/* Footer Buttons */}
-            <div className="border-t-2 border-gray-200 pt-6 mt-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <div className="border-t-2 border-gray-200 pt-5 sm:pt-6 mt-6 sm:mt-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center justify-between">
                 <button className="text-lg font-medium text-gray-600 hover:text-gray-900 flex items-center gap-2 transition-colors group">
                   <AlertTriangle className="h-6 w-6 group-hover:text-red-600 transition-colors" />
@@ -462,13 +462,13 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                     variant="outline"
                     onClick={handlePrevQuestion}
                     disabled={currentQuestion === 0}
-                    className="border-2 border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-7 py-3 text-lg font-medium transition-all duration-200"
+                    className="border-2 border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 sm:px-7 py-2.5 sm:py-3 text-base sm:text-lg font-medium transition-all duration-200"
                   >
                 Previous
               </Button>
               <Button
                     onClick={handleNextQuestion}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-9 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 sm:px-9 py-2.5 sm:py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
               >
                     {currentQuestion < test.questions.length - 1 ? "Save & Next" : "Submit"}
               </Button>
@@ -478,8 +478,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
           </div>
         </main>
         
-        {/* Sidebar */}
-        <aside className="w-[500px] bg-white/95 backdrop-blur-sm border-l-2 border-gray-200 shadow-xl overflow-y-auto">
+        <aside className="w-full lg:w-[420px] bg-white/95 backdrop-blur-sm border-t-2 lg:border-t-0 lg:border-l-2 border-gray-200 shadow-xl overflow-y-auto">
           <div className="p-8">
             {/* Question Status Summary */}
             <div className="mb-8 space-y-4 bg-gradient-to-br from-gray-50 to-blue-50/30 p-6 rounded-xl border border-gray-200">
@@ -509,8 +508,8 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
             {/* Question Navigation */}
             <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-5">Choose a question</h3>
-              <div className="grid grid-cols-5 gap-3">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-5">Choose a question</h3>
+              <div className="grid grid-cols-6 sm:grid-cols-5 gap-2 sm:gap-3">
                 {test.questions.map((q, index) => {
                   const status = getQuestionStatus(q.id)
                   const isCurrent = currentQuestion === index
@@ -520,7 +519,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                       key={q.id}
                       onClick={() => setCurrentQuestion(index)}
                       className={`
-                        question-nav-btn relative w-14 h-14 rounded-full border-2 font-bold text-lg
+                        question-nav-btn relative w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 font-bold text-base sm:text-lg
                         flex items-center justify-center shadow-md
                         ${
                           isCurrent
@@ -538,7 +537,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                       <span className={isCurrent ? 'text-blue-600 font-bold' : status === 'answered' || status === 'answered-marked' ? 'text-white font-bold' : 'text-gray-700 font-semibold'}>
                         {index + 1}
                       </span>
-                      <span className={`absolute -top-1 -right-1 text-base font-bold ${isCurrent ? 'text-blue-600' : status === 'answered' || status === 'answered-marked' ? 'text-white' : 'text-gray-700'}`}>*</span>
+                      <span className={`absolute -top-1 -right-1 text-xs sm:text-base font-bold ${isCurrent ? 'text-blue-600' : status === 'answered' || status === 'answered-marked' ? 'text-white' : 'text-gray-700'}`}>*</span>
                       {status === 'answered-marked' && (
                         <CheckCircle2 className="absolute -bottom-0.5 -right-0.5 h-4 w-4 text-green-500 fill-green-500" />
                       )}
@@ -552,7 +551,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             </div>
 
             {/* Instruction */}
-            <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl p-5 shadow-md">
+            <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl p-4 sm:p-5 shadow-md">
               <p className="text-base font-medium text-red-700 leading-relaxed">
                 Provide a response to the question marked with an asterisk (*), as it is a mandatory requirement.
               </p>

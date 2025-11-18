@@ -65,10 +65,10 @@ export default function MyResultsPage() {
         {/* Hero Section */}
         <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white">
           <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative container mx-auto py-12 px-6">
+          <div className="relative container mx-auto py-10 px-4 sm:px-6">
             <div className="flex items-center space-x-3 mb-2">
               <Trophy className="h-8 w-8 text-yellow-300 animate-pulse" />
-              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
                 My Results
               </h1>
             </div>
@@ -85,7 +85,7 @@ export default function MyResultsPage() {
         </div>
 
         {/* Results Cards */}
-        <div className="container mx-auto py-12 px-6">
+        <div className="container mx-auto py-10 px-4 sm:px-6">
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 font-medium">
               {error}
@@ -102,13 +102,13 @@ export default function MyResultsPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
             {results.map((r, index) => {
               const percentage = Math.round(r.percentage)
               return (
                 <Card 
                   key={r._id} 
-                  className={`group relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-500 hover:-translate-y-2 ${getScoreColor(percentage).replace('text-', 'ring-').replace('bg-', 'bg-')} bg-white/80 backdrop-blur-sm`}
+                  className={`group relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-500 hover:-translate-y-2 ${getScoreColor(percentage).replace('text-', 'ring-').replace('bg-', 'bg-')} bg-white/80 backdrop-blur-sm sm:max-w-md sm:mx-auto`}
                   style={{
                     animationDelay: `${index * 100}ms`,
                     animation: 'slideInUp 0.8s ease-out forwards, hoverCard 6s ease-in-out infinite',
