@@ -456,35 +456,37 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
             {/* Footer Buttons */}
             <div className="border-t-2 border-gray-200 pt-5 sm:pt-6 mt-6 sm:mt-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-              <div className="flex items-center justify-between">
-                <button className="text-lg font-medium text-gray-600 hover:text-gray-900 flex items-center gap-2 transition-colors group">
-                  <AlertTriangle className="h-6 w-6 group-hover:text-red-600 transition-colors" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <button className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white/80 text-sm sm:text-lg font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all group whitespace-nowrap w-full sm:w-auto shadow-sm">
+                  <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 group-hover:text-red-600 transition-colors" />
                   Report content
                 </button>
-                <div className="flex items-center gap-4">
+                <div className="w-full sm:w-auto flex flex-col gap-3 sm:gap-4">
                   <Button
                     variant="outline"
                     onClick={handleSubmitTest}
-                    className="border-green-500 text-green-700 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-900 transition-all text-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full sm:w-auto border-green-500 text-green-700 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-900 transition-all text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                   >
                     Submit Test
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handlePrevQuestion}
-                    disabled={currentQuestion === 0}
-                    className="border-2 border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 sm:px-7 py-2.5 sm:py-3 text-base sm:text-lg font-medium transition-all duration-200"
-                  >
-                Previous
-              </Button>
-              <Button
-                    onClick={handleNextQuestion}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 sm:px-9 py-2.5 sm:py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-              >
-                    {currentQuestion < test.questions.length - 1 ? "Save & Next" : "Submit"}
-              </Button>
-            </div>
-              </div> 
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={handlePrevQuestion}
+                      disabled={currentQuestion === 0}
+                      className="w-full sm:w-auto border-2 border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 sm:px-7 py-2.5 sm:py-3 text-base sm:text-lg font-medium transition-all duration-200"
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      onClick={handleNextQuestion}
+                      className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 sm:px-9 py-2.5 sm:py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                    >
+                      {currentQuestion < test.questions.length - 1 ? "Save & Next" : "Submit"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </main>
