@@ -98,8 +98,11 @@ export default function AvailableTestsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-blue"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="relative h-16 w-16">
+          <div className="absolute inset-0 rounded-full border-4 border-blue-100"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 border-r-blue-600 animate-spin"></div>
+        </div>
       </div>
     )
   }

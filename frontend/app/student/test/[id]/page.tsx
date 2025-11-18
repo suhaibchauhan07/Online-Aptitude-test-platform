@@ -77,42 +77,39 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
           duration: durationInMinutes
         })
         
-        // Set initial duration and time left based on test start
         setInitialDuration(durationInSeconds)
-        let startMsCandidate = [
-          // Prefer attempt-specific fields if present
-          (testData.attemptStartTime && new Date(testData.attemptStartTime).getTime()) || null,
-          (testData.startedAt && new Date(testData.startedAt).getTime()) || null,
-          (testData.startTime && new Date(testData.startTime).getTime()) || null,
-        ].find((v) => typeof v === 'number' && !isNaN(v as number)) as number | undefined
+        let startMsCandidate: number | undefined
+        try {
+          const availRes = await fetch(`${API_BASE_URL}/student/tests/available`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          })
+          if (availRes.ok) {
+            const availData = await availRes.json()
+            const list = Array.isArray(availData) ? availData : availData?.data
+            if (Array.isArray(list)) {
+              const match = list.find((t: any) => t._id === id || t.id === id)
+              if (match?.startTime) {
+                const ts = new Date(match.startTime).getTime()
+                if (!Number.isNaN(ts)) startMsCandidate = ts
+              }
+            }
+          }
+        } catch (_) {}
 
-        // Fallback: try to read from localStorage if we previously stored it
+        if (!startMsCandidate) {
+          startMsCandidate = [
+            (testData.attemptStartTime && new Date(testData.attemptStartTime).getTime()) || null,
+            (testData.startedAt && new Date(testData.startedAt).getTime()) || null,
+            (testData.startTime && new Date(testData.startTime).getTime()) || null,
+          ].find((v) => typeof v === 'number' && !isNaN(v as number)) as number | undefined
+        }
+
         if (!startMsCandidate) {
           const lsVal = localStorage.getItem(`testStart:${id}`)
           if (lsVal) {
             const parsed = Number(lsVal)
             if (!Number.isNaN(parsed)) startMsCandidate = parsed
           }
-        }
-
-        // Fallback: query available tests to find startTime for this test
-        if (!startMsCandidate) {
-          try {
-            const availRes = await fetch(`${API_BASE_URL}/student/tests/available`, {
-              headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            })
-            if (availRes.ok) {
-              const availData = await availRes.json()
-              const list = Array.isArray(availData) ? availData : availData?.data
-              if (Array.isArray(list)) {
-                const match = list.find((t: any) => t._id === id || t.id === id)
-                if (match?.startTime) {
-                  const ts = new Date(match.startTime).getTime()
-                  if (!Number.isNaN(ts)) startMsCandidate = ts
-                }
-              }
-            }
-          } catch (_) {}
         }
 
         if (startMsCandidate && typeof startMsCandidate === 'number') {
@@ -141,10 +138,9 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
   }
 
-  // Handle timer - only start when test is loaded and duration is set
+  // Handle timer - start when test is loaded
   useEffect(() => {
-    // Don't start timer if test is not loaded or duration is 0
-    if (!test || initialDuration === 0 || timeLeft === 0) {
+    if (!test || initialDuration === 0) {
       return
     }
 
@@ -295,8 +291,11 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="relative h-16 w-16">
+        <div className="absolute inset-0 rounded-full border-4 border-blue-100"></div>
+        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 border-r-blue-600 animate-spin"></div>
+        </div>
       </div>
     )
   }
