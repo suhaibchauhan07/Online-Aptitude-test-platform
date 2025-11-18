@@ -144,6 +144,18 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
     fetchTestData()
   }, [id])
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`testAnswers:${id}`)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed && typeof parsed === 'object') {
+          setAnswers(parsed)
+        }
+      }
+    } catch (_) {}
+  }, [id])
+
   // Format time left as HH:MM:SS
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
@@ -184,25 +196,28 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
   }, [test, initialDuration, timerReady])
 
   const handleAnswerChange = (questionId: string, value: any) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: value,
-    }))
+    setAnswers((prev) => {
+      const next = { ...prev, [questionId]: value }
+      try { localStorage.setItem(`testAnswers:${id}`, JSON.stringify(next)) } catch (_) {}
+      return next
+    })
   }
 
   const handleMSQChange = (questionId: string, option: string) => {
     const currentAnswer = answers[questionId] || []
 
     if (currentAnswer.includes(option)) {
-      setAnswers((prev) => ({
-        ...prev,
-        [questionId]: currentAnswer.filter((opt: string) => opt !== option),
-      }))
+      setAnswers((prev) => {
+        const next = { ...prev, [questionId]: currentAnswer.filter((opt: string) => opt !== option) }
+        try { localStorage.setItem(`testAnswers:${id}`, JSON.stringify(next)) } catch (_) {}
+        return next
+      })
     } else {
-      setAnswers((prev) => ({
-        ...prev,
-        [questionId]: [...currentAnswer, option],
-      }))
+      setAnswers((prev) => {
+        const next = { ...prev, [questionId]: [...currentAnswer, option] }
+        try { localStorage.setItem(`testAnswers:${id}`, JSON.stringify(next)) } catch (_) {}
+        return next
+      })
     }
   }
 
@@ -402,7 +417,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
         <div className="flex items-center gap-3 animate-fade-in-up">
           <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl flex items-center gap-3 shadow-md border border-gray-200">
             <Clock className="h-5 w-5 text-blue-600" />
-            <span className="text-sm sm:text-base font-semibold text-gray-800">Total time left: {formatTime(timeLeft)}</span>
+            <span className="text-sm sm:text-base font-semibold text-gray-800">Time left: {formatTime(timeLeft)}</span>
           </div>
           <button
             className="lg:hidden ml-2 px-3 py-2 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95 transition-all"

@@ -1,7 +1,9 @@
 export const calculateScore = async (test, studentAnswers) => {
     let marksObtained = 0;
-    // Fallback to number of questions if totalMarks missing
-    const computedTotalMarks = Number(test.totalMarks ?? (Array.isArray(test.questions) ? test.questions.length : 0)) || 0;
+    // Compute total marks from per-question marks when available, else fallback
+    const questionList = Array.isArray(test.questions) ? test.questions : []
+    const perQuestionTotal = questionList.reduce((acc, q) => acc + Number(q?.marks ?? 1), 0)
+    const computedTotalMarks = Number(test.totalMarks ?? perQuestionTotal) || perQuestionTotal || 0;
 
     console.log('Calculating score for test:', test._id);
     console.log('Student answers:', studentAnswers);
@@ -23,24 +25,25 @@ export const calculateScore = async (test, studentAnswers) => {
 
         // Handle different answer types
         let isCorrect = false;
+        const qType = question.type || 'mcq'
         
-        if (question.type === 'mcq') {
+        if (qType === 'mcq' || qType === 'MCQ') {
             // For MCQ, compare string values
             isCorrect = String(question.correctAnswer) === String(answer.selectedAnswer);
-        } else if (question.type === 'msq') {
+        } else if (qType === 'msq' || qType === 'MSQ') {
             // For MSQ, compare arrays
             const correctAnswers = Array.isArray(question.correctAnswer) ? question.correctAnswer : [question.correctAnswer];
             const selectedAnswers = Array.isArray(answer.selectedAnswer) ? answer.selectedAnswer : [answer.selectedAnswer];
             isCorrect = correctAnswers.length === selectedAnswers.length && 
                        correctAnswers.every(ans => selectedAnswers.includes(ans));
-        } else if (question.type === 'nat') {
+        } else if (qType === 'nat' || qType === 'NAT') {
             // For NAT, compare numeric values
             const correctNum = Number(question.correctAnswer);
             const selectedNum = Number(answer.selectedAnswer);
             isCorrect = !isNaN(correctNum) && !isNaN(selectedNum) && correctNum === selectedNum;
         }
 
-        // Default marks to 1 if not provided on question
+        // Marks per question
         const perQuestionMarks = Number(question?.marks ?? 1);
         const marks = isCorrect ? perQuestionMarks : 0;
 

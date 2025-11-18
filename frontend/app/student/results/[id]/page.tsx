@@ -12,6 +12,7 @@ export default function TestResult({ params }: { params: { id: string } }) {
 	const [result, setResult] = useState<any>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [fallback, setFallback] = useState<any | null>(null);
 
 	useEffect(() => { 
 		const fetchResult = async () => {
@@ -28,6 +29,46 @@ export default function TestResult({ params }: { params: { id: string } }) {
 				}
 				const data = await response.json();
 				setResult(data);
+				try { if (data?.answers && data.answers.length > 0) localStorage.removeItem(`testAnswers:${id}`) } catch (_) {}
+				if (!data?.answers || data.answers.length === 0) {
+					try {
+						const saved = localStorage.getItem(`testAnswers:${id}`)
+						if (saved) {
+							const localAnswers = JSON.parse(saved)
+							const qRes = await fetch(`${API_BASE_URL}/student/tests/${id}/questions`, {
+								headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+							})
+							if (qRes.ok) {
+								const questions = await qRes.json()
+								const qMap = new Map(questions.map((q: any) => [q.id, q]))
+								const entries = Object.entries(localAnswers)
+								const computed = entries.map(([questionId, selected]: any) => {
+									const q = qMap.get(questionId)
+									if (!q) return { questionId, selectedAnswer: selected, isCorrect: false, marksObtained: 0 }
+									let isCorrect = false
+									if (q.type === 'mcq' || q.type === 'MCQ') {
+										isCorrect = String(q.correctAnswer) === String(selected)
+									} else if (q.type === 'msq' || q.type === 'MSQ') {
+										const ca = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer]
+										const sa = Array.isArray(selected) ? selected : [selected]
+										isCorrect = ca.length === sa.length && ca.every((v: any) => sa.includes(v))
+									} else if (q.type === 'nat' || q.type === 'NAT') {
+										const cn = Number(q.correctAnswer)
+										const sn = Number(selected)
+										isCorrect = !Number.isNaN(cn) && !Number.isNaN(sn) && cn === sn
+									}
+									const perMarks = Number(q?.marks ?? 1)
+									return { questionId, selectedAnswer: selected, isCorrect, marksObtained: isCorrect ? perMarks : 0 }
+								})
+								const totalMarks = questions.reduce((acc: number, q: any) => acc + Number(q?.marks ?? 1), 0)
+								const marksObtained = computed.reduce((acc: number, a: any) => acc + a.marksObtained, 0)
+								const percentage = totalMarks > 0 ? (marksObtained / totalMarks) * 100 : 0
+								setFallback({ answers: computed, totalMarks, marksObtained, percentage })
+								try { localStorage.removeItem(`testAnswers:${id}`) } catch (_) {}
+							}
+						}
+					} catch (_) {}
+				}
 			} catch (err) {
 				setError(err instanceof Error ? err.message : 'Failed to fetch result');
 			} finally {
@@ -130,11 +171,11 @@ export default function TestResult({ params }: { params: { id: string } }) {
 	}
 
 	const sectionScores = Array.isArray(result.sectionScores) ? result.sectionScores : [];
-	const percentage = typeof result.percentage === 'number' ? Math.round(result.percentage) : 0;
-	const totalMarks = typeof result.totalMarks === 'number' ? result.totalMarks : (result.answers?.length || 0);
-	const marksObtained = typeof result.marksObtained === 'number' ? result.marksObtained : 0;
+	const percentage = typeof result.percentage === 'number' && result.answers?.length ? Math.round(result.percentage) : Math.round(fallback?.percentage || 0);
+	const totalMarks = typeof result.totalMarks === 'number' && result.answers?.length ? result.totalMarks : (fallback?.totalMarks || 0);
+	const marksObtained = typeof result.marksObtained === 'number' && result.answers?.length ? result.marksObtained : (fallback?.marksObtained || 0);
 	const scoreData = getScoreData(percentage);
-	const analytics = getAnalyticsData(result);
+	const analytics = getAnalyticsData(result.answers?.length ? result : (fallback || { answers: [] }));
 
 	return (
 		<StudentLayout>

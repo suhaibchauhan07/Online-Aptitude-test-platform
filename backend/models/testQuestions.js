@@ -19,6 +19,15 @@ const testQuestionsSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  marks: {
+    type: Number,
+    default: 1
+  },
+  type: {
+    type: String,
+    enum: ['mcq', 'msq', 'nat', 'MCQ', 'MSQ', 'NAT'],
+    default: 'mcq'
+  },
   createdAt: {
     type: Date,
     default: Date.now
