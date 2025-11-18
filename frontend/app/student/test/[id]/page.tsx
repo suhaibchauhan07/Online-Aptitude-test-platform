@@ -98,24 +98,25 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
         if (!startMsCandidate) {
           startMsCandidate = [
+            (testData.startTime && new Date(testData.startTime).getTime()) || null,
+            (() => {
+              const lsVal = localStorage.getItem(`testStart:${id}`)
+              if (lsVal) {
+                const parsed = Number(lsVal)
+                if (!Number.isNaN(parsed)) return parsed
+              }
+              return null
+            })(),
             (testData.attemptStartTime && new Date(testData.attemptStartTime).getTime()) || null,
             (testData.startedAt && new Date(testData.startedAt).getTime()) || null,
-            (testData.startTime && new Date(testData.startTime).getTime()) || null,
           ].find((v) => typeof v === 'number' && !isNaN(v as number)) as number | undefined
-        }
-
-        if (!startMsCandidate) {
-          const lsVal = localStorage.getItem(`testStart:${id}`)
-          if (lsVal) {
-            const parsed = Number(lsVal)
-            if (!Number.isNaN(parsed)) startMsCandidate = parsed
-          }
         }
 
         if (startMsCandidate && typeof startMsCandidate === 'number') {
           const endMs = startMsCandidate + durationInMinutes * 60 * 1000
           const nowMs = Date.now()
-          const remainingSeconds = Math.max(0, Math.floor((endMs - nowMs) / 1000))
+          const rawRemaining = Math.floor((endMs - nowMs) / 1000)
+          const remainingSeconds = Math.max(0, Math.min(durationInSeconds, rawRemaining))
           setTimeLeft(remainingSeconds)
         } else {
           setTimeLeft(durationInSeconds)
