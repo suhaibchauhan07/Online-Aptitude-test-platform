@@ -1,5 +1,5 @@
+//AvailableTestsPage
 "use client"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -126,7 +126,22 @@ export default function AvailableTestsPage() {
           <div className="text-center text-gray-600">No available tests at the moment.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tests.map((test) => {
+            {([...tests].sort((a, b) => {
+              const now = new Date().getTime()
+              const aStart = new Date(a.startTime).getTime()
+              const bStart = new Date(b.startTime).getTime()
+              const aEnd = aStart + (a.duration || 0) * 60000
+              const bEnd = bStart + (b.duration || 0) * 60000
+              const aAvailable = now >= aStart && now <= aEnd
+              const bAvailable = now >= bStart && now <= bEnd
+              const aUpcoming = now < aStart
+              const bUpcoming = now < bStart
+              const weight = (available: boolean, upcoming: boolean) => available ? 0 : upcoming ? 1 : 2
+              const wA = weight(aAvailable, aUpcoming)
+              const wB = weight(bAvailable, bUpcoming)
+              if (wA !== wB) return wA - wB
+              return aStart - bStart
+            })).map((test) => {
               const now = new Date()
               const startTime = new Date(test.startTime)
               const endTime = new Date(startTime.getTime() + test.duration * 60000)

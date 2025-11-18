@@ -114,10 +114,8 @@ export default function MyResultsPage() {
                     animation: 'slideInUp 0.8s ease-out forwards, hoverCard 6s ease-in-out infinite',
                   }}
                 >
-                  {/* Animated background gradient */}
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-indigo-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   
-                  {/* Score percentage with dynamic styling */}
                   <div className="absolute top-4 right-4">
                     <div className={`${getScoreColor(percentage)} px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center space-x-1`}>
                       {getScoreIcon(percentage)}
@@ -133,7 +131,6 @@ export default function MyResultsPage() {
                   </CardHeader>
 
                   <CardContent className="space-y-6 relative z-10">
-                    {/* Score details with enhanced UI */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600 font-medium flex items-center space-x-2">
@@ -145,7 +142,6 @@ export default function MyResultsPage() {
                         </Badge>
                       </div>
 
-                      {/* Animated progress bar */}
                       <div className="space-y-2">
                         <div className="flex justify-between items-center text-sm">
                           <span className="font-medium text-gray-700">Performance</span>
@@ -171,7 +167,6 @@ export default function MyResultsPage() {
                         </div>
                       </div>
 
-                      {/* Completion time */}
                       <div className="flex items-center space-x-3 text-gray-600">
                         <Calendar className="h-4 w-4 text-blue-500" />
                         <span className="text-sm font-medium">
@@ -184,7 +179,6 @@ export default function MyResultsPage() {
                       </div>
                     </div>
 
-                    {/* Enhanced CTA button */}
                     <div className="pt-4">
                       <Button 
                         asChild 
@@ -198,7 +192,6 @@ export default function MyResultsPage() {
                     </div>
                   </CardContent>
 
-                  {/* Animated border on hover */}
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-sm"></div>
                 </Card>
               )

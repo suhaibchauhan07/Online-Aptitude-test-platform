@@ -338,6 +338,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
   }
 
   const question = test.questions[currentQuestion]
+  const qType = (question?.type || 'mcq').toString().toLowerCase()
   const statusCounts = getStatusCounts()
 
   return (
@@ -450,11 +451,11 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             </div>
 
             {/* Options */}
-              {question.type === "mcq" && question.options && (
+              {qType === "mcq" && Array.isArray(question.options) && (
                 <RadioGroup
                   value={answers[question.id]?.toString() || ""}
                   onValueChange={(value) => handleAnswerChange(question.id, value)}
-                className="space-y-4 sm:space-y-5 mb-8 sm:mb-10"
+                  className="space-y-4 sm:space-y-5 mb-8 sm:mb-10"
                 >
                   {question.options.map((option, idx) => (
                   <div 
@@ -471,7 +472,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                 </RadioGroup>
               )}
 
-              {question.type === "msq" && question.options && (
+              {qType === "msq" && Array.isArray(question.options) && (
               <div className="space-y-4 sm:space-y-5 mb-8 sm:mb-10">
                   {question.options.map((option, idx) => (
                   <div 
@@ -493,7 +494,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               )}
 
-              {question.type === "nat" && (
+              {qType === "nat" && (
               <div className="mb-8 sm:mb-10">
                   <Input
                     id={`nat-answer-${question.id}`}

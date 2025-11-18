@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, AlertTriangle, Clock, Trophy, Award, Star, TrendingUp, Calendar, Target, Zap, FileText, Brain, Timer, ArrowRight } from "lucide-react";
 import API_BASE_URL from "@/app/config/api"
+type Question = { id: string; type: string; correctAnswer: any; marks?: number }
 
 export default function TestResult({ params }: { params: { id: string } }) {
 	const id = params.id
@@ -38,28 +39,28 @@ export default function TestResult({ params }: { params: { id: string } }) {
 							const qRes = await fetch(`${API_BASE_URL}/student/tests/${id}/questions`, {
 								headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
 							})
-							if (qRes.ok) {
-								const questions = await qRes.json()
-								const qMap = new Map(questions.map((q: any) => [q.id, q]))
-								const entries = Object.entries(localAnswers)
-								const computed = entries.map(([questionId, selected]: any) => {
-									const q = qMap.get(questionId)
-									if (!q) return { questionId, selectedAnswer: selected, isCorrect: false, marksObtained: 0 }
-									let isCorrect = false
-									if (q.type === 'mcq' || q.type === 'MCQ') {
-										isCorrect = String(q.correctAnswer) === String(selected)
-									} else if (q.type === 'msq' || q.type === 'MSQ') {
-										const ca = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer]
-										const sa = Array.isArray(selected) ? selected : [selected]
-										isCorrect = ca.length === sa.length && ca.every((v: any) => sa.includes(v))
-									} else if (q.type === 'nat' || q.type === 'NAT') {
-										const cn = Number(q.correctAnswer)
-										const sn = Number(selected)
-										isCorrect = !Number.isNaN(cn) && !Number.isNaN(sn) && cn === sn
-									}
-									const perMarks = Number(q?.marks ?? 1)
-									return { questionId, selectedAnswer: selected, isCorrect, marksObtained: isCorrect ? perMarks : 0 }
-								})
+                            if (qRes.ok) {
+                                const questions: Question[] = await qRes.json()
+                                const qMap = new Map<string, Question>(questions.map((q) => [String(q.id), q]))
+                                const entries = Object.entries(localAnswers as Record<string, any>)
+                                const computed = entries.map(([questionId, selected]: [string, any]) => {
+                                    const q = qMap.get(String(questionId))
+                                    if (!q) return { questionId, selectedAnswer: selected, isCorrect: false, marksObtained: 0 }
+                                    let isCorrect = false
+                                    if (q.type === 'mcq' || q.type === 'MCQ') {
+                                        isCorrect = String(q.correctAnswer) === String(selected)
+                                    } else if (q.type === 'msq' || q.type === 'MSQ') {
+                                        const ca = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer]
+                                        const sa = Array.isArray(selected) ? selected : [selected]
+                                        isCorrect = ca.length === sa.length && ca.every((v: any) => sa.includes(v))
+                                    } else if (q.type === 'nat' || q.type === 'NAT') {
+                                        const cn = Number(q.correctAnswer)
+                                        const sn = Number(selected)
+                                        isCorrect = !Number.isNaN(cn) && !Number.isNaN(sn) && cn === sn
+                                    }
+                                    const perMarks = Number(q?.marks ?? 1)
+                                    return { questionId, selectedAnswer: selected, isCorrect, marksObtained: isCorrect ? perMarks : 0 }
+                                })
 								const totalMarks = questions.reduce((acc: number, q: any) => acc + Number(q?.marks ?? 1), 0)
 								const marksObtained = computed.reduce((acc: number, a: any) => acc + a.marksObtained, 0)
 								const percentage = totalMarks > 0 ? (marksObtained / totalMarks) * 100 : 0
