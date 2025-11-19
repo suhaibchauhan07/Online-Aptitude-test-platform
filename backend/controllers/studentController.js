@@ -408,6 +408,23 @@ export const submitTest = async (req, res) => {
 
                 // If no in-progress attempt exists, create one on the fly (robustness)
                 if (!studentTest) {
+                    // Guard against rapid duplicate submissions: reuse most recent completed attempt in last 5 seconds
+                    const recentCompleted = await StudentTest.findOne({
+                        testId: test._id,
+                        studentId: req.user._id,
+                        status: 'completed'
+                    }).sort({ completedAt: -1 });
+                    if (recentCompleted && (Date.now() - new Date(recentCompleted.completedAt).getTime()) < 5000) {
+                        return res.status(200).json({
+                            totalMarks: recentCompleted.totalMarks,
+                            marksObtained: recentCompleted.marksObtained,
+                            percentage: recentCompleted.percentage,
+                            timeTaken: recentCompleted.timeTaken
+                        });
+                    }
+                }
+
+                if (!studentTest) {
                     studentTest = await StudentTest.create({
                         studentId: req.user._id,
                         testId: test._id,

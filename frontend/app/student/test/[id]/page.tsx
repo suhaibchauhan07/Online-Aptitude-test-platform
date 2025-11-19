@@ -39,6 +39,9 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
   const [error, setError] = useState<string | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const submittedRef = useRef(false)
+  const [attemptId, setAttemptId] = useState<string | null>(null)
 
   // Fetch test data
   useEffect(() => {
@@ -134,6 +137,19 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
           setTimeLeft(durationInSeconds)
           setTimerReady(durationInSeconds > 0)
         }
+
+        // Ensure an in-progress attempt exists to prevent duplicate submissions
+        try {
+          const startRes = await fetch(`${API_BASE_URL}/student/tests/${id}/start`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          })
+          if (startRes.ok) {
+            const startData = await startRes.json()
+            const attempt = startData.data || startData
+            if (attempt?.attemptId) setAttemptId(attempt.attemptId)
+          }
+        } catch (_) {}
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch test data')
       } finally {
@@ -180,7 +196,10 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
           if (timerRef.current) {
             clearInterval(timerRef.current)
           }
-          handleSubmitTest()
+          if (!submittedRef.current) {
+            submittedRef.current = true
+            handleSubmitTest()
+          }
           return 0
         }
         return prev - 1
@@ -246,6 +265,9 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
   const handleSubmitTest = async () => {
     try {
+      if (isSubmitting || submittedRef.current) return
+      setIsSubmitting(true)
+      submittedRef.current = true
       // Stop the timer
       if (timerRef.current) {
         clearInterval(timerRef.current)
@@ -278,6 +300,9 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
       router.push(`/student/results/${id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit test')
+    }
+    finally {
+      setIsSubmitting(false)
     }
   }
 
