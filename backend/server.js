@@ -9,6 +9,10 @@ import studentTestRoutes from './routes/studentTestRoutes.js';
 import facultyRoutes from './routes/facultyRoutes.js';
 import testRoutes from './routes/testRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import {
+    globalRateLimiter,
+    globalSpeedLimiter
+} from './middleware/rateLimitMiddleware.js';
 
 // Suppress deprecation warnings
 process.removeAllListeners('warning');
@@ -29,6 +33,7 @@ if (!process.env.MONGODB_URI) {
 console.log('MongoDB URI loaded:', process.env.MONGODB_URI ? 'Yes' : 'No');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Middleware
 const allowedOrigins = [
@@ -49,6 +54,8 @@ app.use(cors({
     },
     credentials: true
 }));
+app.use(globalSpeedLimiter);
+app.use(globalRateLimiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

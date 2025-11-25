@@ -17,26 +17,31 @@ import {
     startTest
 } from '../controllers/studentTestController.js';
 import { authMiddleware, requireRole } from '../middleware/authMiddleware.js';
+import {
+    authRateLimiter,
+    authSpeedLimiter,
+    mutationRateLimiter
+} from '../middleware/rateLimitMiddleware.js';
 
 const router = express.Router();
 
 // Public routes
-router.post('/register', registerStudent);
-router.post('/login', loginStudent);
+router.post('/register', authSpeedLimiter, authRateLimiter, registerStudent);
+router.post('/login', authSpeedLimiter, authRateLimiter, loginStudent);
 
 // Protected routes - apply auth middleware to all routes
 router.use(authMiddleware);
 
 // Profile routes
 router.get('/profile', getStudentProfile);
-router.put('/profile', updateStudentProfile);
+router.put('/profile', mutationRateLimiter, updateStudentProfile);
 
 // Test routes
 router.get('/tests/available', getAvailableTests);
 router.get('/tests/:testId', getTestDetails);
 router.get('/instructions/:testId', getInstructions);
-router.post('/tests/:testId/start', startTest);
-router.post('/tests/:testId/submit', submitTest);
+router.post('/tests/:testId/start', mutationRateLimiter, startTest);
+router.post('/tests/:testId/submit', mutationRateLimiter, submitTest);
 router.get('/tests/:testId/result', getTestResult);
 // My results
 router.get('/results', getMyResults);

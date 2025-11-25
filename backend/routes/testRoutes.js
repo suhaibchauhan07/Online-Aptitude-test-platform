@@ -6,15 +6,17 @@ import {
     getTestQuestions
 } from "../controllers/testController.js";
 import { authMiddleware, requireRole } from "../middleware/authMiddleware.js";
+import { mutationRateLimiter } from "../middleware/rateLimitMiddleware.js";
 
 const router = express.Router();
 
 // Protected routes
-router.post('/create', authMiddleware, requireRole(['faculty']), createTest);
+router.post('/create', authMiddleware, requireRole(['faculty']), mutationRateLimiter, createTest);
 router.get('/:testId', authMiddleware, requireRole(['faculty']), getTestDetails);
 router.post('/:testId/questions', 
     authMiddleware, 
     requireRole(['faculty']), 
+    mutationRateLimiter,
     uploadTestQuestions
 );
 router.get('/:testId/questions', authMiddleware, requireRole(['faculty']), getTestQuestions);

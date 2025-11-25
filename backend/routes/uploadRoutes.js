@@ -3,12 +3,13 @@ import multer from "multer";
 import UploadedFile from "../models/uploadedfile.js";
 import TestQuestions from "../models/testQuestions.js";
 import xlsx from "xlsx";
+import { uploadRateLimiter, uploadSpeedLimiter } from "../middleware/rateLimitMiddleware.js";
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() }); // 🧠 store in RAM
 
 // GET route to download template
-router.get("/template", (req, res) => {
+router.get("/template", uploadSpeedLimiter, uploadRateLimiter, (req, res) => {
   try {
     // Create a new workbook
     const workbook = xlsx.utils.book_new();
@@ -67,7 +68,7 @@ router.get("/template", (req, res) => {
 });
 
 // POST route to upload questions
-router.post("/", upload.single("file"), async (req, res) => {
+router.post("/", uploadSpeedLimiter, uploadRateLimiter, upload.single("file"), async (req, res) => {
   try {
 
     const uploaded = new UploadedFile({
