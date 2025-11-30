@@ -16,7 +16,7 @@ const practiceData = [
     title: 'General Aptitude',
     links: [
       { name: 'Arithmetic Aptitude', href: '/practice/arithmetic-aptitude' },
-      { name: 'Data Interpretation', href: '#' },
+      { name: 'Data Interpretation', href: '/practice/data-interpretation' },
       { name: 'Online Aptitude Test', href: '#' },
       { name: 'Data Interpretation Test', href: '#' }
     ],
@@ -25,7 +25,7 @@ const practiceData = [
   {
     title: 'Verbal and Reasoning',
     links: [
-      { name: 'Verbal Ability', href: '#' },
+      { name: 'Verbal Ability', href: '/practice/verbal-ability' },
       { name: 'Logical Reasoning', href: '#' },
       { name: 'Verbal Reasoning', href: '#' },
       { name: 'Non Verbal Reasoning', href: '#' } 
