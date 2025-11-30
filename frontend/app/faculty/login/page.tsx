@@ -1,7 +1,5 @@
 "use client"
-
-import type React from "react"
-
+import React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -14,6 +12,10 @@ import { API_BASE_URL } from "@/app/config/api"
 
 export default function FacultyLogin() {
   const router = useRouter()
+  // Prefetch dashboard to reduce perceived wait on redirect
+  React.useEffect(() => {
+    try { router.prefetch('/faculty/dashboard') } catch {}
+  }, [router])
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     email: "",

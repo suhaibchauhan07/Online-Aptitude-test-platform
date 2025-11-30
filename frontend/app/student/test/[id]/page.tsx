@@ -1,3 +1,4 @@
+// Test Details Page
 "use client"
 import { use, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation"
@@ -547,19 +548,8 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
             {/* Footer Buttons */}
             <div className="border-t-2 border-gray-200 pt-5 sm:pt-6 mt-6 sm:mt-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <button className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white/80 text-sm sm:text-lg font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all group whitespace-nowrap w-full sm:w-auto shadow-sm">
-                  <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 group-hover:text-red-600 transition-colors" />
-                  Report content
-                </button>
-                <div className="w-full sm:w-auto flex flex-col gap-3 sm:gap-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleSubmitTest}
-                    className="w-full sm:w-auto border-green-500 text-green-700 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-900 transition-all text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-                  >
-                    Submit Test
-                  </Button>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">              
+                <div className="w-full sm:w-auto flex flex-col gap-3 sm:gap-4">                 
                   <div className="flex items-center gap-3">
                     <Button
                       variant="outline"
@@ -575,6 +565,13 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                     >
                       {currentQuestion < test.questions.length - 1 ? "Save & Next" : "Submit"}
                     </Button>
+                     <Button
+                    variant="outline"
+                    onClick={handleSubmitTest}
+                    className="w-full sm:w-auto border-green-500 text-green-700 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-900 transition-all text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                  >
+                    Submit Test
+                  </Button>
                   </div>
                 </div>
               </div>

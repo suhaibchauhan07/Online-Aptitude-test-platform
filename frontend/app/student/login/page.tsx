@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
@@ -14,6 +14,10 @@ import { API_BASE_URL } from "@/app/config/api"
 
 export default function StudentLogin() {
   const router = useRouter()
+  // Prefetch dashboard to reduce perceived wait on redirect
+  React.useEffect(() => {
+    try { router.prefetch('/student/dashboard') } catch {}
+  }, [router])
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     rollNumber: "",
