@@ -64,12 +64,14 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Add authentication check middleware
-app.use((req, res, next) => {
-    console.log('Request headers:', req.headers);
-    console.log('Request method:', req.method);
-    console.log('Request origin:', req.get('origin'));
-    next();
-});
+if (process.env.NODE_ENV === 'development') {
+    app.use((req, res, next) => {
+        console.log('Request headers:', req.headers);
+        console.log('Request method:', req.method);
+        console.log('Request origin:', req.get('origin'));
+        next();
+    });
+}
 
 // MongoDB Connection with proper error handling
 const connectDB = async () => {
@@ -97,13 +99,15 @@ const connectDB = async () => {
 connectDB();
 
 // Enhanced request logging middleware
-app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    if (req.method === 'POST') {
-        console.log('Request body:', req.body);
-    }
-    next();
-});
+if (process.env.NODE_ENV === 'development') {
+    app.use((req, res, next) => {
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+        if (req.method === 'POST') {
+            console.log('Request body:', req.body);
+        }
+        next();
+    });
+}
 
 // Routes with proper error handling
 app.use('/api/student', studentTestRoutes);
