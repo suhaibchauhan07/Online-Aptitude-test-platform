@@ -10,6 +10,7 @@ export default function FacultyStudentTestDetailPage(){
   const studentId = String(params.studentId)
   const testId = String(params.testId)
   const [result, setResult] = useState<any>(null)
+  const [marksMap, setMarksMap] = useState<Map<string, number>>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string|null>(null)
 
@@ -23,6 +24,20 @@ export default function FacultyStudentTestDetailPage(){
         if(!res.ok) throw new Error('Failed to load')
         const data = await res.json()
         setResult(data)
+        try {
+          const qRes = await fetch(`${API_BASE_URL}/tests/${testId}/questions`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          })
+          if (qRes.ok) {
+            const questions = await qRes.json()
+            const map = new Map<string, number>()
+            for (const q of questions) {
+              const id = String(q._id || q.id)
+              map.set(id, Number(q.marks ?? 1))
+            }
+            setMarksMap(map)
+          }
+        } catch (_) {}
       }catch(e){
         setError('Failed to load result')
       }finally{
@@ -54,7 +69,7 @@ export default function FacultyStudentTestDetailPage(){
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>{title}</span>
-            <Badge variant="outline">{percentage}%</Badge>
+            <Badge variant="outline">Marks: {marks}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -65,9 +80,10 @@ export default function FacultyStudentTestDetailPage(){
           <div className="space-y-2">
             {Array.isArray(result.answers) && result.answers.map((a:any, idx:number)=>{
               const status = a.isCorrect ? 'Correct' : 'Incorrect'
+              const qm = Number(a.questionMarks ?? marksMap.get(String(a.questionId)) ?? 1)
               return (
                 <div key={idx} className="p-3 border rounded-md flex items-center justify-between">
-                  <span className="text-sm">Q{idx+1}</span>
+                  <span className="text-sm">Q{idx+1} ({qm} marks)</span>
                   <span className={a.isCorrect?"text-green-700":"text-red-700"}>{status}</span>
                 </div>
               )

@@ -11,6 +11,7 @@ type Question = { id: string; type: string; correctAnswer: any; marks?: number }
 export default function TestResult({ params }: { params: { id: string } }) {
 	const id = params.id
 	const [result, setResult] = useState<any>(null);
+	const [marksMap, setMarksMap] = useState<Map<string, number>>(new Map());
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [fallback, setFallback] = useState<any | null>(null);
@@ -77,6 +78,22 @@ export default function TestResult({ params }: { params: { id: string } }) {
 			}
 		};
 		fetchResult();
+	}, [id]);
+
+	useEffect(() => {
+		const fetchMarks = async () => {
+			try {
+				const qRes = await fetch(`${API_BASE_URL}/student/tests/${id}/questions`, {
+					headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+				});
+				if (qRes.ok) {
+					const questions: Question[] = await qRes.json();
+					const mMap = new Map<string, number>(questions.map((q) => [String(q.id), Number(q.marks ?? 1)]));
+					setMarksMap(mMap);
+				}
+			} catch (_) {}
+		};
+		if (id) fetchMarks();
 	}, [id]);
 
 	const getScoreData = (percentage: number) => {
@@ -199,18 +216,18 @@ export default function TestResult({ params }: { params: { id: string } }) {
 							{scoreData.text}
 						</p>
 						<div className="mt-6 flex items-center space-x-6 text-blue-100">
-							<div className="flex items-center space-x-2 transform transition-all duration-300 hover:scale-105 hover:translate-y-[-2px]">
-								<CheckCircle className="h-5 w-5" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
-								<span className="font-medium" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)" }}>Score: {percentage}%</span>
-							</div>
+                            <div className="flex items-center space-x-2 transform transition-all duration-300 hover:scale-105 hover:translate-y-[-2px]">
+                                <CheckCircle className="h-5 w-5" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
+                                <span className="font-medium" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)" }}>Marks: {marksObtained}/{totalMarks}</span>
+                            </div>
 							<div className="flex items-center space-x-2 transform transition-all duration-300 hover:scale-105 hover:translate-y-[-2px]">
 								<Target className="h-5 w-5" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
 								<span className="font-medium" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)" }}>{marksObtained}/{totalMarks} marks</span>
 							</div>
-							<div className="flex items-center space-x-2 transform transition-all duration-300 hover:scale-105 hover:translate-y-[-2px]">
-								<Brain className="h-5 w-5" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
-								<span className="font-medium" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)" }}>Accuracy: {Math.round(analytics.accuracyRate)}%</span>
-							</div>
+                            <div className="flex items-center space-x-2 transform transition-all duration-300 hover:scale-105 hover:translate-y-[-2px]">
+                                <Brain className="h-5 w-5" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
+                                <span className="font-medium" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)" }}>Correct: {analytics.correctCount}/{analytics.totalQuestions}</span>
+                            </div>
 						</div>
 					</div>
 				</div>
@@ -229,13 +246,13 @@ export default function TestResult({ params }: { params: { id: string } }) {
 											<Trophy className="h-5 w-5 text-blue-600 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
 											<span className="text-sm font-medium text-gray-600">Overall Score</span>
 										</div>
-										<div className="text-3xl font-bold text-gray-800" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>{percentage}%</div>
+                                        <div className="text-3xl font-bold text-gray-800" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>{marksObtained}/{totalMarks} marks</div>
 									</div>
 									<div className={`px-3 py-1 rounded-full ${scoreData.color} bg-gradient-to-r text-white text-sm font-bold transform transition-all duration-300 group-hover:scale-105`} style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}>
 										{marksObtained}/{totalMarks}
 									</div>
 								</div>
-								<Progress value={percentage} className="mt-4 h-2" />
+                                <Progress value={percentage} className="mt-4 h-2" />
 							</CardContent>
 						</Card>
 
@@ -251,9 +268,9 @@ export default function TestResult({ params }: { params: { id: string } }) {
 										</div>
 										<div className="text-3xl font-bold text-gray-800" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>{analytics.correctCount}</div>
 									</div>
-									<div className="px-3 py-1 rounded-full bg-green-500 text-white text-sm font-bold transform transition-all duration-300 group-hover:scale-105" style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}>
-										{Math.round(analytics.accuracyRate)}%
-									</div>
+                                    <div className="px-3 py-1 rounded-full bg-green-500 text-white text-sm font-bold transform transition-all duration-300 group-hover:scale-105" style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}>
+                                        {analytics.correctCount}/{analytics.totalQuestions}
+                                    </div>
 								</div>
 								<Progress value={analytics.accuracyRate} className="mt-4 h-2" />
 							</CardContent>
@@ -320,8 +337,9 @@ export default function TestResult({ params }: { params: { id: string } }) {
 									// In a complete implementation, you'd fetch question details
 									const questionNumber = index + 1;
 									const isCorrect = answer.isCorrect;
-									const userAnswer = answer.selectedAnswer;
-									const marksForThis = answer.marksObtained || 0;
+							const userAnswer = answer.selectedAnswer;
+							const totalMarksForThis = Number(answer.questionMarks ?? marksMap.get(String(answer.questionId)) ?? 0);
+							const marksForThis = answer.marksObtained || 0;
 									
 									return (
 										<div 
@@ -344,8 +362,8 @@ export default function TestResult({ params }: { params: { id: string } }) {
 														{questionNumber}
 													</div>
 							<div>
-														<h4 className="font-bold text-gray-800" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>Question {questionNumber}</h4>
-														<p className="text-sm text-gray-600">Marks: {marksForThis}</p>
+								<h4 className="font-bold text-gray-800" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>Question {questionNumber} ({totalMarksForThis} marks)</h4>
+								<p className="text-sm text-gray-600">Marks: {totalMarksForThis}</p>
 													</div>
 												</div>
 												
@@ -361,9 +379,9 @@ export default function TestResult({ params }: { params: { id: string } }) {
 															<span className="font-bold">Incorrect</span>
 														</div>
 													)}
-													<Badge variant={isCorrect ? "default" : "destructive"} className="font-bold transform transition-all duration-300 group-hover/question:scale-105">
-														{marksForThis} marks
-													</Badge>
+										<Badge variant={isCorrect ? "default" : "destructive"} className="font-bold transform transition-all duration-300 group-hover/question:scale-105">
+											{totalMarksForThis} marks
+										</Badge>
 												</div>
 											</div>
 
@@ -432,9 +450,9 @@ export default function TestResult({ params }: { params: { id: string } }) {
 												<div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full"></div>
 												<span>{section.name}</span>
 											</span>
-											<span className="text-sm font-bold text-blue-600">
-													{section.score}% ({Math.round(((section.score || 0) * (section.total || 0)) / 100)}/{section.total || 0})
-												</span>
+                                            <span className="text-sm font-bold text-blue-600">
+                                                    {Math.round(((section.score || 0) * (section.total || 0)) / 100)}/{section.total || 0}
+                                                </span>
 											</div>
 										<div className="h-3 bg-gray-300 rounded-full overflow-hidden shadow-inner group-hover/section:shadow-lg transition-shadow duration-300">
 											<div 
@@ -468,12 +486,12 @@ export default function TestResult({ params }: { params: { id: string } }) {
 						<CardContent className="relative z-10 space-y-6">
 							<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 								<div className="text-center p-4 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200">
-									<div className="text-2xl font-bold text-blue-600 mb-2">{Math.round(analytics.accuracyRate)}%</div>
-									<div className="text-sm text-blue-700 font-medium">Accuracy Rate</div>
+                                    <div className="text-2xl font-bold text-blue-600 mb-2">{analytics.correctCount}/{analytics.totalQuestions}</div>
+                                    <div className="text-sm text-blue-700 font-medium">Correct Answers</div>
 									<div className="text-xs text-blue-600 mt-1">
-										{analytics.accuracyRate >= 80 ? 'Excellent!' : 
-										 analytics.accuracyRate >= 60 ? 'Good work!' : 
-										 analytics.accuracyRate >= 40 ? 'Keep practicing!' : 'Needs improvement!'}
+                                        {percentage >= 80 ? 'Excellent!' : 
+                                         percentage >= 60 ? 'Good work!' : 
+                                         percentage >= 40 ? 'Keep practicing!' : 'Needs improvement!'}
 									</div>
 								</div>
 

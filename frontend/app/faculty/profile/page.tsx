@@ -20,6 +20,31 @@ interface ProfileData {
   gender?: string;
 }
 
+interface TiltProps extends React.HTMLAttributes<HTMLDivElement> { className?: string; children: React.ReactNode }
+function TiltCard({ className, children, ...rest }: TiltProps) {
+  const [style, setStyle] = React.useState<any>({})
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width
+    const y = (e.clientY - rect.top) / rect.height
+    const rX = (0.5 - y) * 6
+    const rY = (x - 0.5) * 6
+    setStyle({ transform: `perspective(1000px) rotateX(${rX}deg) rotateY(${rY}deg)` })
+  }
+  const handleLeave = () => setStyle({ transform: `perspective(1000px) rotateX(0deg) rotateY(0deg)` })
+  return (
+    <div
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      style={style}
+      className={`transition-transform duration-300 will-change-transform ${className || ""}`}
+      {...rest}
+    >
+      {children}
+    </div>
+  )
+}
+
 export default function FacultyProfilePage() {
   const [profile, setProfile] = useState<ProfileData>({
     profilePicture: "",
@@ -44,6 +69,7 @@ export default function FacultyProfilePage() {
     confirmPassword: "",
   });
   const [passwordMsg, setPasswordMsg] = useState("");
+  const [parallax, setParallax] = useState({ x: 0, y: 0 })
 
   // Move fetchProfile here
   const fetchProfile = async () => {
@@ -165,12 +191,30 @@ export default function FacultyProfilePage() {
   if (error) return <div className="p-8 text-red-500">{error}</div>;
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-10">
+    <div className="max-w-6xl mx-auto p-4 md:p-10 min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <style jsx global>{`
+        @keyframes floatSlow { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+        @keyframes pulseGlow { 0%, 100% { opacity: 0.6 } 50% { opacity: 1 } }
+      `}</style>
       <h2 className="text-3xl font-bold mb-10">My Profile</h2>
-      {/* Top Card */}
-      <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row items-center gap-8 mb-10">
+      <TiltCard
+        className="relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl p-8 flex flex-col md:flex-row items-center gap-8 mb-10"
+        onMouseMove={(e: React.MouseEvent<HTMLDivElement>) => {
+          const rect = e.currentTarget.getBoundingClientRect()
+          const x = (e.clientX - rect.left) / rect.width - 0.5
+          const y = (e.clientY - rect.top) / rect.height - 0.5
+          setParallax({ x, y })
+        }}
+        onMouseLeave={() => setParallax({ x: 0, y: 0 })}
+      >
+        <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-gradient-to-br from-blue-200/60 to-indigo-200/40 blur-2xl" style={{ transform: `translate3d(${parallax.x * 18}px, ${parallax.y * -12}px, 0)` }} />
+        <div className="absolute -bottom-12 -right-12 h-48 w-48 rounded-full bg-gradient-to-br from-pink-200/60 to-purple-200/40 blur-2xl" style={{ transform: `translate3d(${parallax.x * -20}px, ${parallax.y * 14}px, 0)` }} />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute left-10 top-1/2 -translate-y-1/2 h-24 w-24 rounded-full bg-blue-300/20 animate-floatSlow" style={{ filter: "blur(10px)", transform: `translate3d(${parallax.x * 12}px, ${parallax.y * 8}px, 0)` }} />
+          <div className="absolute right-16 top-6 h-16 w-16 rounded-full bg-purple-300/20 animate-pulseGlow" style={{ filter: "blur(6px)", transform: `translate3d(${parallax.x * -10}px, ${parallax.y * -6}px, 0)` }} />
+        </div>
         <div className="relative">
-          <Avatar className="h-28 w-28">
+          <Avatar className="h-28 w-28 ring-4 ring-white/70 shadow-xl">
             <AvatarImage src={profile.profilePicture || "/default-profile.png"} alt="Profile" />
             <AvatarFallback className="text-3xl">{profile.firstName?.charAt(0) || "F"}</AvatarFallback>
           </Avatar>
@@ -187,24 +231,43 @@ export default function FacultyProfilePage() {
           </label>
         </div>
         <div className="flex-1 text-center md:text-left">
-          <div className="text-2xl font-bold mb-1">{profile.username}</div>
-          <div className="text-lg text-gray-600 mb-1">{profile.department}</div>
+          <div className="text-2xl font-extrabold tracking-tight mb-1">{profile.username}</div>
+          <div className="text-lg text-gray-700 font-medium mb-1">{profile.department}</div>
           {(profile.city || profile.country) && (
             <div className="text-base text-gray-400">
               {[profile.city, profile.country].filter(Boolean).join(", ")}
             </div>
           )}
         </div>
-        <Button variant="outline" size="sm" className="self-center md:self-start" onClick={() => setEditSection("top")}>Edit <Pencil className="h-4 w-4 ml-1" /></Button>
+        <Button size="sm" className="self-center md:self-start bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95" onClick={() => setEditSection("top")}>Edit <Pencil className="h-4 w-4 ml-1" /></Button>
+      </TiltCard>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <TiltCard className="p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 shadow-md">
+          <div className="text-xs text-blue-700">Department</div>
+          <div className="text-sm font-semibold text-blue-900">{profile.department || "-"}</div>
+        </TiltCard>
+        <TiltCard className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 shadow-md">
+          <div className="text-xs text-indigo-700">Location</div>
+          <div className="text-sm font-semibold text-indigo-900">{profile.location || "-"}</div>
+        </TiltCard>
+        <TiltCard className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-100 shadow-md">
+          <div className="text-xs text-emerald-700">Email</div>
+          <div className="text-sm font-semibold text-emerald-900 truncate">{profile.email || "-"}</div>
+        </TiltCard>
+        <TiltCard className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-100 shadow-md">
+          <div className="text-xs text-amber-700">Phone</div>
+          <div className="text-sm font-semibold text-amber-900">{profile.phone || "-"}</div>
+        </TiltCard>
       </div>
 
       {/* Two-column grid for Personal Info and Address */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-10">
         {/* Personal Information Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <TiltCard className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-xl p-6 sm:p-8">
           <div className="flex justify-between items-center mb-6">
             <div className="font-semibold text-xl">Personal Information</div>
-            <Button variant="outline" size="sm" onClick={() => setEditSection("personal")}>Edit <Pencil className="h-4 w-4 ml-1" /></Button>
+            <Button size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95" onClick={() => setEditSection("personal")}>Edit <Pencil className="h-4 w-4 ml-1" /></Button>
           </div>
           <div className="grid grid-cols-1 gap-5">
             <div>
@@ -271,12 +334,12 @@ export default function FacultyProfilePage() {
               <Button size="sm" variant="outline" onClick={() => setEditSection(null)}>Cancel</Button>
             </div>
           )}
-        </div>
+        </TiltCard>
         {/* Address Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <TiltCard className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-xl p-6 sm:p-8">
           <div className="flex justify-between items-center mb-6">
             <div className="font-semibold text-xl">Address</div>
-            <Button variant="outline" size="sm" onClick={() => setEditSection("address")}>Edit <Pencil className="h-4 w-4 ml-1" /></Button>
+            <Button size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95" onClick={() => setEditSection("address")}>Edit <Pencil className="h-4 w-4 ml-1" /></Button>
           </div>
           <div className="grid grid-cols-1 gap-5">
             <div>
@@ -310,11 +373,11 @@ export default function FacultyProfilePage() {
               <Button size="sm" variant="outline" onClick={() => setEditSection(null)}>Cancel</Button>
             </div>
           )}
-        </div>
+        </TiltCard>
       </div>
 
       {/* Password Change Card (full width) */}
-      <div className="bg-white rounded-2xl shadow-lg p-8 mb-10">
+      <TiltCard className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-xl p-6 sm:p-8 mb-10">
         <div className="flex justify-between items-center mb-6">
           <div className="font-semibold text-xl">Change Password</div>
         </div>
@@ -347,7 +410,7 @@ export default function FacultyProfilePage() {
             required
           />
           <div className="col-span-2 flex gap-2 mt-2">
-            <Button type="submit" size="sm">Change Password</Button>
+            <Button type="submit" size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95">Change Password</Button>
             {passwordMsg && (
               <span className={`text-sm ${passwordMsg.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
                 {passwordMsg}
@@ -355,7 +418,7 @@ export default function FacultyProfilePage() {
             )}
           </div>
         </form>
-      </div>
+      </TiltCard>
     </div>
   );
 } 

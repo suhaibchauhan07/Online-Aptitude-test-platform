@@ -8,7 +8,6 @@ import path from 'path';
 import studentTestRoutes from './routes/studentTestRoutes.js';
 import facultyRoutes from './routes/facultyRoutes.js';
 import testRoutes from './routes/testRoutes.js';
-import uploadRoutes from './routes/uploadRoutes.js';
 import {
     globalRateLimiter,
     globalSpeedLimiter
@@ -56,8 +55,6 @@ app.use(cors({
 }));
 app.use(globalSpeedLimiter);
 app.use(globalRateLimiter);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Increase payload size limit for file uploads
 app.use(express.json({ limit: '50mb' }));
@@ -113,7 +110,6 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/student', studentTestRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/tests', testRoutes);
-app.use('/api/upload', uploadRoutes);
 
 // 404 handler
 app.use((req, res) => {

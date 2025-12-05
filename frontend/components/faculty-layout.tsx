@@ -3,7 +3,7 @@
 import type React from "react"
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { BookOpen, Home, Users, FileText, BarChart2, Settings, User, LogOut, Plus, GraduationCap } from "lucide-react"
+import { BookOpen, Home, Users, FileText, Settings, User, LogOut, Plus, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import CreateTestModal from "@/app/components/CreateTestModal"
@@ -90,9 +90,7 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
                 <div className="space-y-1">
                   <NavItem href="/faculty/dashboard" icon={<Home className="h-5 w-5" />} label="Dashboard" />
                   <NavItem href="/faculty/profile" icon={<User className="h-5 w-5" />} label="Profile" />
-                  <NavItem href="/faculty/classes" icon={<Users className="h-5 w-5" />} label="Manage Classes" />
-                  <NavItem href="/faculty/tests" icon={<FileText className="h-5 w-5" />} label="Manage Tests" />
-                  <Button
+                   <Button
                     variant="ghost"
                     className="w-full justify-start"
                     onClick={() => setIsCreateTestModalOpen(true)}
@@ -100,9 +98,8 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
                     <Plus className="h-5 w-5" />
                     <span className="ml-2 hidden md:inline">Create Test</span>
                   </Button>
+                  <NavItem href="/faculty/tests" icon={<FileText className="h-5 w-5" />} label="Manage Tests" />
                   <NavItem href="/faculty/student-results" icon={<Users className="h-5 w-5" />} label="Student Results" />
-                  <NavItem href="/faculty/results" icon={<BarChart2 className="h-5 w-5" />} label="View Results" />
-                  <NavItem href="/faculty/settings" icon={<Settings className="h-5 w-5" />} label="Settings" />
                 </div>
               </div>
               <div className="mt-6 w-full">

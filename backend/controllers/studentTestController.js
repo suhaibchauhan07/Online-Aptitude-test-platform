@@ -1,6 +1,7 @@
 import Test from '../models/Test.js';
 import StudentTest from '../models/studentTestModel.js';
 import { calculateScore } from '../utils/scoreCalculator.js';
+import TestQuestions from '../models/testQuestions.js';
 
 // Get available tests for student
 export const getAvailableTests = async (req, res) => {
@@ -41,6 +42,16 @@ export const getAvailableTests = async (req, res) => {
       ]
     }).select('title description instructions startTime endTime duration totalMarks testName');
 
+    const totalsAgg = await TestQuestions.aggregate([
+      { $group: { _id: '$testId', total: { $sum: '$marks' } } }
+    ]);
+    const totalMap = new Map(totalsAgg.map(t => [String(t._id), Number(t.total)]));
+    const enriched = tests.map(t => {
+      const obj = t.toObject();
+      obj.totalMarks = totalMap.get(String(t._id)) ?? obj.totalMarks;
+      return obj;
+    });
+
     console.log('Available tests after filtering:', tests.length);
     console.log('Available test details:', tests.map(t => ({
       id: t._id,
@@ -51,7 +62,7 @@ export const getAvailableTests = async (req, res) => {
 
     res.status(200).json({
       status: 'success',
-      data: tests
+      data: enriched
     });
   } catch (error) {
     console.error('Error fetching available tests:', error);
@@ -65,7 +76,7 @@ export const getAvailableTests = async (req, res) => {
 // Get test details and questions
 export const getTestDetails = async (req, res) => {
   try {
-    const test = await Test.findById(req.params.testId);
+    const test = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
     if (!test) {
       return res.status(404).json({
         status: 'error',
@@ -75,13 +86,14 @@ export const getTestDetails = async (req, res) => {
 
     // Allow multiple attempts - no restrictions on retaking tests
 
+    const computedTotal = Array.isArray(test.questions) ? test.questions.reduce((s, q) => s + Number(q?.marks ?? 1), 0) : (test.totalMarks || 0);
     res.status(200).json({
       status: 'success',
       data: {
         testName: test.testName,
         instructions: test.instructions,
         duration: test.duration,
-        totalMarks: test.totalMarks,
+        totalMarks: computedTotal,
         questions: test.questions
       }
     });
@@ -119,7 +131,7 @@ export const startTest = async (req, res) => {
       });
     }
 
-    const test = await Test.findById(req.params.testId);
+    const test = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
     if (!test) {
       console.error('Test not found:', req.params.testId);
       return res.status(404).json({
@@ -150,10 +162,11 @@ export const startTest = async (req, res) => {
 
     console.log('Creating new test attempt...');
     // Create new test attempt
+    const initialTotal = Array.isArray(test.questions) ? test.questions.reduce((s, q) => s + Number(q?.marks ?? 1), 0) : (test.totalMarks || 0);
     const newAttempt = await StudentTest.create({
       studentId: req.user._id,
       testId: test._id,
-      totalMarks: test.totalMarks || test.questions?.length || 0,
+      totalMarks: Number(initialTotal) || 0,
       marksObtained: 0,
       percentage: 0,
       status: 'in_progress',

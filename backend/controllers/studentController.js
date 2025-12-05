@@ -370,7 +370,8 @@ export const startTest = async (req, res) => {
             questions: questions.map(q => ({
                 questionId: q._id,
                 question: q.question,
-                options: q.options
+                options: q.options,
+                marks: Number(q.marks ?? 1)
             }))
         });
     } catch (error) {
@@ -512,11 +513,16 @@ export const getTestResult = async (req, res) => {
                 result.completedAt = new Date();
                 result.timeTaken = Math.floor((result.completedAt - result.startedAt) / 60000);
                 
-                // Calculate score based on existing answers
+                // Calculate score based on existing answers using per-question marks
                 const answers = result.answers || [];
-                const correctCount = answers.filter(ans => ans.isCorrect).length;
-                result.marksObtained = correctCount;
-                result.percentage = result.totalMarks > 0 ? (correctCount / result.totalMarks) * 100 : 0;
+                const testWithQuestions = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
+                const questions = Array.isArray(testWithQuestions?.questions) ? testWithQuestions.questions : [];
+                const marksMap = new Map(questions.map(q => [String(q._id), Number(q.marks ?? 1)]));
+                const totalMarks = questions.reduce((sum, q) => sum + Number(q.marks ?? 1), 0);
+                const marksObtained = answers.reduce((sum, ans) => ans.isCorrect ? sum + (marksMap.get(String(ans.questionId)) ?? 1) : sum, 0);
+                result.marksObtained = Number(marksObtained);
+                result.totalMarks = Number(totalMarks);
+                result.percentage = totalMarks > 0 ? (marksObtained / totalMarks) * 100 : 0;
                 
                 await result.save();
                 console.log('Test marked as completed');
@@ -615,9 +621,10 @@ export const getTestQuestionsForStudent = async (req, res) => {
         const formattedQuestions = questions.map(q => ({
             id: q._id.toString(),
             text: q.question,
-            type: q.type || 'mcq', // default to 'mcq' if not present
+            type: (q.type || 'mcq'),
             options: q.options,
-            correctAnswer: q.correctAnswer
+            correctAnswer: q.correctAnswer,
+            marks: Number(q.marks ?? 1)
         }));
         res.status(200).json(formattedQuestions);
     } catch (error) {

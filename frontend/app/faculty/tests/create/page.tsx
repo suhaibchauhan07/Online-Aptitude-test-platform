@@ -16,9 +16,7 @@ export default function CreateTest() {
     const router = useRouter()
     const [testData, setTestData] = useState({
         title: '',
-        description: '',
-        duration: '',
-        totalMarks: ''
+        duration: ''
     })
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -33,7 +31,7 @@ export default function CreateTest() {
         e.preventDefault()
         setError('')
 
-        if (!testData.title || !testData.duration || !testData.totalMarks) {
+        if (!testData.title || !testData.duration) {
             setError('Please fill in all required fields')
             return
         }
@@ -47,7 +45,11 @@ export default function CreateTest() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify(testData)
+                body: JSON.stringify({
+                    testName: testData.title,
+                    duration: Number(testData.duration),
+                    status: 'active'
+                })
             })
 
             if (!response.ok) {
@@ -89,16 +91,7 @@ export default function CreateTest() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="description">Description</Label>
-                            <Input
-                                id="description"
-                                name="description"
-                                value={testData.description}
-                                onChange={handleChange}
-                                placeholder="Enter test description"
-                            />
-                        </div>
+                        
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -114,18 +107,7 @@ export default function CreateTest() {
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="totalMarks">Total Marks</Label>
-                                <Input
-                                    id="totalMarks"
-                                    name="totalMarks"
-                                    type="number"
-                                    value={testData.totalMarks}
-                                    onChange={handleChange}
-                                    placeholder="Enter total marks"
-                                    required
-                                />
-                            </div>
+                            
                         </div>
 
                         <Button type="submit" disabled={isLoading} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl">

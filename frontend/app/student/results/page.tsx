@@ -105,6 +105,7 @@ export default function MyResultsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
             {results.map((r, index) => {
               const percentage = Math.round(r.percentage)
+              const marksStr = `${Number(r.marksObtained)||0}/${Number(r.totalMarks)||0} marks`
               return (
                 <Card 
                   key={r._id} 
@@ -117,9 +118,8 @@ export default function MyResultsPage() {
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-indigo-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   
                   <div className="absolute top-4 right-4">
-                    <div className={`${getScoreColor(percentage)} px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center space-x-1`}>
-                      {getScoreIcon(percentage)}
-                      <span>{percentage}%</span>
+                    <div className={`px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center space-x-1 bg-white/90 text-gray-800 border border-gray-200`}>
+                      <span>{marksStr}</span>
                     </div>
                   </div>
 
@@ -144,8 +144,8 @@ export default function MyResultsPage() {
 
                       <div className="space-y-2">
                         <div className="flex justify-between items-center text-sm">
-                          <span className="font-medium text-gray-700">Performance</span>
-                          <span className="font-bold text-gray-800">{percentage}%</span>
+                          <span className="font-medium text-gray-700">Marks</span>
+                          <span className="font-bold text-gray-800">{marksStr}</span>
                         </div>
                         <div className="h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
                           <div 

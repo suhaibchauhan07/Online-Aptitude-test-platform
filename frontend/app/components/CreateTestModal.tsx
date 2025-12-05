@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Upload, XCircle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import Stepper from '@/components/ui/stepper'
@@ -32,9 +31,7 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
     const [step, setStep] = useState(0); // 0: Details, 1: Upload, 2: Preview
     const [formData, setFormData] = useState({
         title: '',
-        description: '',
         duration: '',
-        totalMarks: '',
         startTime: '',
         instructions: ''
     })
@@ -62,7 +59,7 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
 
             // Validate headers
             const firstRow = jsonData[0] as any
-            const requiredHeaders = ['Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'CorrectAnswer']
+            const requiredHeaders = ['Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'CorrectAnswer', 'Marks']
             const missingHeaders = requiredHeaders.filter(header => !(header in firstRow))
 
             if (missingHeaders.length > 0) {
@@ -77,6 +74,9 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                 const optionC = String(row.OptionC || '').trim()
                 const optionD = String(row.OptionD || '').trim()
                 const correctAnswer = String(row.CorrectAnswer || '').trim()
+                const rawMarks = row.Marks ?? row.marks ?? row.TotalMarks
+                const marksNum = Number(rawMarks)
+                const marks = Number.isFinite(marksNum) && marksNum > 0 ? marksNum : 1
 
                 // Validate required fields
                 if (!question) {
@@ -103,7 +103,7 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                     options,
                     correctAnswer,
                     type: 'MCQ' as const,
-                    marks: 1 // Default marks per question
+                    marks
                 }
             })
 
@@ -131,9 +131,7 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                 throw new Error('Authentication token not found');
             }
 
-            // First, calculate total marks
-            const totalMarks = questions.reduce((sum, q) => sum + (q.marks || 1), 0);
-            formData.totalMarks = totalMarks.toString() || '0'  ;
+            // total marks will be computed from uploaded questions server-side
 
             // Before creating testPayload, ensure startTime is an ISO string if present
             if (formData.startTime && !formData.startTime.endsWith('Z')) {
@@ -144,9 +142,7 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
             // Then, create the test
             const testPayload = {
                 testName: formData.title,
-                description: formData.description || '',
                 duration: Number(formData.duration),
-                totalMarks: Number(formData.totalMarks),
                 startTime: formData.startTime,
                 instructions: formData.instructions,
                 status: 'active'
@@ -211,9 +207,7 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
     const handleClose = () => {
         setFormData({
             title: '',
-            description: '',
             duration: '',
-            totalMarks: '',
             startTime: '',
             instructions: ''
         })
@@ -249,23 +243,15 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                 {step === 0 && (
                   <Card className="p-6 mb-4">
                         <h3 className="text-lg font-semibold mb-4">Test Details</h3>
-                    <div className="space-y-4 grid grid-cols-2 gap-4">
+                <div className="space-y-4 grid grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="title">Title</Label>
                         <Input id="title" value={formData.title} onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))} placeholder="Enter test title" />
                             </div>
                             <div>
-                                <Label htmlFor="description">Description</Label>
-                        <Input id="description" value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} placeholder="Enter test description" />
-                            </div>
-                            <div>
                                 <Label htmlFor="duration">Duration (minutes)</Label>
                         <Input id="duration" type="number" value={formData.duration} onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))} placeholder="Enter duration" />
                             </div>
-                            <div>
-                                <Label htmlFor="totalMarks">Total Marks</Label>
-                        <Input id="totalMarks" type="number" value={formData.totalMarks} onChange={(e) => setFormData(prev => ({ ...prev, totalMarks: e.target.value }))} placeholder="Enter total marks" />
-                      </div>
                       <div>
                         <Label htmlFor="startTime">Start Time</Label>
                         <Input id="startTime" type="datetime-local" value={formData.startTime} onChange={(e) => setFormData({ ...formData, startTime: e.target.value })} placeholder="Select start time" />
@@ -318,7 +304,7 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                     <Button
                       onClick={() => {
                         if (step === 0) {
-                          if (!formData.title || !formData.duration || !formData.totalMarks || !formData.startTime || !formData.instructions) {
+                          if (!formData.title || !formData.duration || !formData.startTime || !formData.instructions) {
                             showAlert('Please fill all required test details before proceeding.');
                             return;
                           }
@@ -339,7 +325,7 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                   {step === 2 && (
                     <Button 
                         onClick={handleSubmit} 
-                      disabled={isLoading || !formData.title || !formData.duration || !formData.totalMarks || !formData.startTime || !formData.instructions || questions.length === 0}
+                      disabled={isLoading || !formData.title || !formData.duration || !formData.startTime || !formData.instructions || questions.length === 0}
                     >
                         {isLoading ? 'Creating...' : 'Create Test'}
                     </Button>

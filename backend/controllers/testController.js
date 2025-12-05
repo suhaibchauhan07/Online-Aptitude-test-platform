@@ -1,9 +1,7 @@
 import Test from "../models/Test.js";
 import UserTest from "../models/UserTest.js";
 import TestQuestion from '../models/testQuestions.js';
-import xlsx from 'xlsx';
-import path from 'path';
-import fs from 'fs';
+ 
 
 export const getTestDetails = async (req, res) => {
   try {
@@ -20,43 +18,7 @@ export const getTestDetails = async (req, res) => {
   }
 };
 
-export const getLeaderboard = async (req, res) => {
-  try {
-    const { testId } = req.params;
-
-    const leaderboard = await UserTest.find({ testId })
-      .sort({ score: -1 })
-      .limit(10)
-      .populate('userId', 'name email');
-
-    res.status(200).json(leaderboard);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const getAnalytics = async (req, res) => {
-  try {
-    const { testId } = req.params;
-
-    const analytics = await UserTest.aggregate([
-      { $match: { testId } },
-      {
-        $group: {
-          _id: null,
-          averageScore: { $avg: "$score" },
-          maxScore: { $max: "$score" },
-          minScore: { $min: "$score" },
-          totalAttempts: { $sum: 1 }
-        }
-      }
-    ]);
-
-    res.status(200).json(analytics[0] || {});
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+ 
 
 export const createTest = async (req, res) => {
     try {
@@ -64,9 +26,9 @@ export const createTest = async (req, res) => {
         const { testName, description, duration, totalMarks, startTime, instructions, status } = req.body;
         const facultyId = req.user.id;
 
-        // Validate required fields
-        if (!testName || !duration || !totalMarks) {
-            console.log('Missing required fields:', { testName, duration, totalMarks });
+        // Validate required fields (totalMarks will be computed from uploaded questions)
+        if (!testName || !duration) {
+            console.log('Missing required fields:', { testName, duration });
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
@@ -75,7 +37,7 @@ export const createTest = async (req, res) => {
             title: testName,
             description: description || '',
             duration: Number(duration),
-            totalMarks: Number(totalMarks),
+            totalMarks: Number(totalMarks) || 0,
             startTime,
             instructions,
             createdBy: facultyId,
@@ -133,27 +95,61 @@ export const uploadTestQuestions = async (req, res) => {
                 throw new Error(`Question ${index + 1}: Correct answer must be one of the options`);
             }
 
+            // Normalize marks coming from different sources (e.g., Excel JSON) and tolerate case/whitespace
+            const lower = Object.keys(q || {}).reduce((acc, k) => { acc[k.trim().toLowerCase()] = q[k]; return acc; }, {});
+            const rawMarks = (q.marks ?? q.Marks ?? q.totalMarks ?? q.TotalMarks ?? lower['marks'] ?? lower['totalmarks']);
+            const parsedMarks = Number(rawMarks);
+            const safeMarks = Number.isFinite(parsedMarks) && parsedMarks > 0 ? parsedMarks : 1;
+
             return {
                 testId,
                 question: q.question.trim(),
                 options: q.options.map(opt => opt.trim()),
                 correctAnswer: q.correctAnswer,
-                type: 'MCQ',
-                marks: Number(q.marks) || 1,
+                marks: safeMarks,
                 createdBy: facultyId
             };
         });
 
-        // Save questions to database
-        const savedQuestions = await TestQuestion.insertMany(processedQuestions);
-        console.log(`Successfully saved ${savedQuestions.length} questions`);
+        // Upsert questions by (testId, question) so re-uploads update marks/options/correctAnswer
+        const bulkOps = processedQuestions.map((q) => ({
+            updateOne: {
+                filter: { testId, question: q.question },
+                update: {
+                    $set: {
+                        options: q.options,
+                        correctAnswer: q.correctAnswer,
+                        marks: q.marks,
+                        createdBy: q.createdBy
+                    }
+                },
+                upsert: true
+            }
+        }));
 
-        // Update test status
-        await Test.findByIdAndUpdate(testId, { status: 'published' });
+        const bulkRes = await TestQuestion.bulkWrite(bulkOps);
+        const upserted = (bulkRes.upsertedCount || 0);
+        const modified = (bulkRes.modifiedCount || 0);
+        console.log(`Questions upserted: ${upserted}, modified: ${modified}`);
+
+        // Update test status and recompute totalMarks from questions
+        try {
+            const mongoose = (await import('mongoose')).default;
+            const agg = await TestQuestion.aggregate([
+                { $match: { testId: new mongoose.Types.ObjectId(testId) } },
+                { $group: { _id: null, total: { $sum: '$marks' } } }
+            ]);
+            const computedTotal = Number(agg?.[0]?.total || 0);
+            await Test.findByIdAndUpdate(testId, { status: 'published', totalMarks: computedTotal });
+            console.log('Updated test.totalMarks to', computedTotal);
+        } catch (e) {
+            console.warn('Failed to recompute test.totalMarks:', e?.message || e);
+            await Test.findByIdAndUpdate(testId, { status: 'published' });
+        }
 
         res.status(201).json({
             message: 'Questions uploaded successfully',
-            questions: savedQuestions
+            summary: { upserted, modified }
         });
     } catch (error) {
         console.error('Error uploading questions:', error);

@@ -1,6 +1,9 @@
 export const calculateScore = async (test, studentAnswers) => {
     let marksObtained = 0;
-    const computedTotalMarks = Number(test.totalMarks ?? (Array.isArray(test.questions) ? test.questions.length : 0)) || 0;
+    const totalFromQuestions = Array.isArray(test.questions)
+        ? test.questions.reduce((sum, q) => sum + Number(q?.marks ?? 1), 0)
+        : 0;
+    const computedTotalMarks = totalFromQuestions || Number(test.totalMarks || 0) || 0;
 
     console.log('Calculating score for test:', test._id);
     console.log('Student answers:', studentAnswers);
@@ -43,7 +46,8 @@ export const calculateScore = async (test, studentAnswers) => {
             questionId: answer.questionId,
             selectedAnswer: answer.selectedAnswer,
             isCorrect,
-            marksObtained: Number(marks)
+            marksObtained: Number(marks),
+            questionMarks: perQuestionMarks
         };
     });
 

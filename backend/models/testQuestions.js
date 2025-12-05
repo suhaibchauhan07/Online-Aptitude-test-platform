@@ -19,6 +19,10 @@ const testQuestionsSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  marks: {
+    type: Number,
+    default: 1
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -33,4 +37,3 @@ const testQuestionsSchema = new mongoose.Schema({
 const TestQuestions = mongoose.model("TestQuestions", testQuestionsSchema);
 
 export default TestQuestions;
-

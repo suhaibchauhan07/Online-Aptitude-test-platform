@@ -17,7 +17,9 @@ interface Question {
   type: "mcq" | "msq" | "nat"
   options: string[]
   correctAnswer?: string | number | number[]
+  marks?: number
 }
+  
 
 interface Test {
   id: string
@@ -343,11 +345,8 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
   if (loading) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="relative h-16 w-16">
-        <div className="absolute inset-0 rounded-full border-4 border-blue-100"></div>
-        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 border-r-blue-600 animate-spin"></div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
       </div>
     )
   }
@@ -472,7 +471,14 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
              
             {/* Question Text */}
             <div className="mb-4 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-              <p className="text-xl sm:text-2xl md:text-3xl text-gray-600 leading-relaxed font-medium">{question.text}</p>
+              <p className="text-xl sm:text-2xl md:text-3xl text-gray-600 leading-relaxed font-medium">
+                {question.text}
+                {typeof question.marks === 'number' && (
+                  <span className="ml-3 inline-block text-sm sm:text-base font-semibold text-blue-700 bg-blue-100 px-3 py-1 rounded-lg align-middle">
+                    Marks: {question.marks}
+                  </span>
+                )}
+              </p>
             </div>
             </div>
 

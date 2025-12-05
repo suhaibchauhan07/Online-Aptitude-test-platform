@@ -169,7 +169,11 @@ export const getFacultyProfile = async (req, res) => {
 // List all completed student results for faculty view
 export const getAllStudentResults = async (req, res) => {
   try {
-    const results = await StudentTest.find({ status: 'completed' })
+    // Only show results for tests created by the logged-in faculty
+    const ownedTests = await Test.find({ createdBy: req.user.id }).select('_id');
+    const ownedTestIds = ownedTests.map(t => t._id);
+
+    const results = await StudentTest.find({ status: 'completed', testId: { $in: ownedTestIds } })
       .sort({ completedAt: -1 })
       .populate({ path: 'studentId', model: Student, select: 'name email rollNo className' })
       .populate({ path: 'testId', model: Test, select: 'title testName totalMarks startTime' });
@@ -204,7 +208,11 @@ export const getAllStudentResults = async (req, res) => {
 export const getStudentResultsByStudentId = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const results = await StudentTest.find({ studentId, status: 'completed' })
+    // Restrict to tests owned by the logged-in faculty
+    const ownedTests = await Test.find({ createdBy: req.user.id }).select('_id');
+    const ownedTestIds = ownedTests.map(t => t._id);
+
+    const results = await StudentTest.find({ studentId, status: 'completed', testId: { $in: ownedTestIds } })
       .sort({ completedAt: -1 })
       .populate({ path: 'studentId', model: Student, select: 'name email rollNo className' })
       .populate({ path: 'testId', model: Test, select: 'title testName totalMarks startTime' });
@@ -217,8 +225,16 @@ export const getStudentResultsByStudentId = async (req, res) => {
 export const getStudentTestResultByStudentAndTest = async (req, res) => {
   try {
     const { studentId, testId } = req.params;
+    // Ensure the requested test is owned by the logged-in faculty
+    const test = await Test.findById(testId).select('createdBy title duration totalMarks startTime');
+    if (!test) {
+      return res.status(404).json({ message: 'Test not found' });
+    }
+    if (String(test.createdBy) !== String(req.user.id)) {
+      return res.status(403).json({ message: 'Access denied: not the owner of this test' });
+    }
     const result = await StudentTest.findOne({ studentId, testId })
-      .populate({ path: 'testId', model: Test, select: 'title duration totalMarks startTime' });
+      .populate({ path: 'testId', model: Test, select: 'title duration totalMarks startTime createdBy' });
     if (!result) {
       return res.status(404).json({ message: 'Result not found' });
     }
@@ -226,7 +242,7 @@ export const getStudentTestResultByStudentAndTest = async (req, res) => {
     const correctCount = answers.filter(a => a.isCorrect).length;
     const incorrectCount = answers.length - correctCount;
     const accuracyRate = answers.length ? (correctCount / answers.length) * 100 : 0;
-    const test = result.testId || {};
+    const testInfo = result.testId || {};
     const formatted = {
       _id: result._id,
       studentId: result.studentId,
@@ -324,7 +340,7 @@ export const createTest = async (req, res) => {
 };
 
 export const uploadQuestions = async (req, res) => {
-    try {
+  try {
         if (!req.file) {
             return res.status(400).json({ message: "No file uploaded" });
         }
@@ -339,22 +355,46 @@ export const uploadQuestions = async (req, res) => {
         const worksheet = workbook.Sheets[sheetName];
         const data = xlsx.utils.sheet_to_json(worksheet);
 
-        // Map and add testId to each question, and map options to array
-        const questionsWithTestId = data.map(q => ({
-            question: q.question,
-            options: [q.optionA, q.optionB, q.optionC, q.optionD],
-            correctAnswer: q.correctAnswer,
-            explanation: q.explanation,
-            testId
+        const normalized = data.map((q) => {
+            const lower = Object.keys(q || {}).reduce((acc, k) => { acc[k.trim().toLowerCase()] = q[k]; return acc; }, {});
+            const rawMarks = q.marks ?? q.Marks ?? q.TotalMarks ?? lower['marks'] ?? lower['totalmarks'] ?? lower['total marks'] ?? lower['mark'] ?? lower['score'];
+            const parsedMarks = Number(rawMarks);
+            const safeMarks = Number.isFinite(parsedMarks) && parsedMarks > 0 ? parsedMarks : 1;
+            return {
+                testId,
+                question: (q.question || q.Question || lower['question'] || '').toString().trim(),
+                options: [q.optionA || q.OptionA || lower['optiona'], q.optionB || q.OptionB || lower['optionb'], q.optionC || q.OptionC || lower['optionc'], q.optionD || q.OptionD || lower['optiond']].map((o) => (o ?? '').toString().trim()),
+                correctAnswer: q.correctAnswer || q.CorrectAnswer || lower['correctanswer'],
+                marks: safeMarks
+            };
+        });
+
+        const bulkOps = normalized.map((q) => ({
+            updateOne: {
+                filter: { testId: q.testId, question: q.question },
+                update: { $set: { options: q.options, correctAnswer: q.correctAnswer, marks: q.marks } },
+                upsert: true
+            }
         }));
 
-        // Save questions to database (assuming TestQuestions is imported)
-        await TestQuestions.insertMany(questionsWithTestId);
+        const bulkRes = await TestQuestions.bulkWrite(bulkOps);
+        const upserted = bulkRes.upsertedCount || 0;
+        const modified = bulkRes.modifiedCount || 0;
 
-        res.status(200).json({ message: "Questions uploaded successfully" });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+        try {
+            const mongoose = (await import('mongoose')).default;
+            const agg = await TestQuestions.aggregate([
+                { $match: { testId: new mongoose.Types.ObjectId(String(testId)) } },
+                { $group: { _id: null, total: { $sum: '$marks' } } }
+            ]);
+            const computedTotal = Number(agg?.[0]?.total || 0);
+            await Test.findByIdAndUpdate(String(testId), { totalMarks: computedTotal });
+        } catch (_) {}
+
+        res.status(200).json({ message: "Questions uploaded successfully", summary: { upserted, modified } });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const changeFacultyPassword = async (req, res) => {

@@ -60,7 +60,6 @@ export default function FacultyStudentResultListPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {results.map((r:any)=>{
             const marks = `${Number(r.marksObtained)||0}/${Number(r.totalMarks)||0}`
-            const percentage = Math.round(Number(r.percentage)||0)
             const title = r.testId?.title || r.testId?.testName || 'Test'
             const testId = r.testId?._id || r.testId
             return (
@@ -68,7 +67,7 @@ export default function FacultyStudentResultListPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>{title}</span>
-                    <Badge variant="outline">{percentage}%</Badge>
+                    <Badge variant="outline">Marks: {marks}</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">

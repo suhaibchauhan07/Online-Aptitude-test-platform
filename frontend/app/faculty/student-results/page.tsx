@@ -38,6 +38,17 @@ export default function FacultyStudentResultsPage() {
     )
   }
 
+  const groups = new Map<string, { student: any; tests: any[] }>()
+  for (const r of results) {
+    const sid = String(r.student?.id || r.studentId || r.student?._id || '')
+    if (!sid) continue
+    const existing = groups.get(sid) || { student: r.student || r.studentId, tests: [] }
+    existing.student = r.student || r.studentId
+    existing.tests.push(r)
+    groups.set(sid, existing)
+  }
+  const grouped = Array.from(groups.entries()).map(([sid, g]) => ({ sid, ...g }))
+
   return (
     <div className="container py-6 px-4 sm:px-6">
       <h1 className="text-xl sm:text-2xl font-bold mb-6 flex items-center gap-2">
@@ -53,39 +64,49 @@ export default function FacultyStudentResultsPage() {
         <div className="text-center py-12 text-gray-500">No completed results found</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {results.map((r:any)=>{
-            const name = r.student?.name || 'Student'
-            const roll = r.student?.rollNo || '-'
-            const className = r.student?.className || '-'
-            const section = r.student?.section || '-'
-            const testTitle = r.test?.title || 'Test'
-            const marks = `${Number(r.marksObtained)||0}/${Number(r.totalMarks)||0}`
-            const percentage = Math.round(Number(r.percentage)||0)
-            const dateStr = r.completedAt ? new Date(r.completedAt).toLocaleDateString() : '-'
+          {grouped.map(({ sid, student, tests }) => {
+            const name = student?.name || 'Student'
+            const roll = student?.rollNo || '-'
+            const className = student?.className || '-'
+            const section = student?.section || '-'
+            const latest = tests[0]
+            const latestMarks = latest ? `${Number(latest.marksObtained)||0}/${Number(latest.totalMarks)||0}` : ''
             return (
-              <Card key={r._id} className="bg-white/80 backdrop-blur-md shadow-xl">
+              <Card key={sid} className="bg-white/80 backdrop-blur-md shadow-xl">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold flex justify-between items-center">
                     <span className="truncate">{name} ({roll})</span>
-                    <Badge variant="outline" className="font-bold">{percentage}%</Badge>
+                    <Badge variant="outline" className="font-bold">Marks: {latestMarks}</Badge>
                   </CardTitle>
-                  <CardDescription className="text-sm text-gray-600">{className}{section!=='-'?` - ${section}`:''}</CardDescription>
+                  <CardDescription className="text-sm text-gray-600">{className}{section!=="-"?` - ${section}`:''}</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="text-sm text-gray-600">{testTitle}</div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-blue-800">Marks: {marks}</span>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar className="h-4 w-4" />
-                      <span className="text-sm">{dateStr}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-green-700">
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="text-sm">Completed</span>
+                <CardContent className="space-y-3">
+                  <div className="text-sm font-semibold text-gray-700">Tests Given</div>
+                  <div className="space-y-2">
+                    {tests.map((t:any) => {
+                      const testTitle = t.test?.title || 'Test'
+                      const marks = `${Number(t.marksObtained)||0}/${Number(t.totalMarks)||0}`
+                      const dateStr = t.completedAt ? new Date(t.completedAt).toLocaleDateString() : '-'
+                      const testId = t.test?.id || t.test?._id || t.testId
+                      return (
+                        <div key={t._id} className="p-3 border rounded-md flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{testTitle}</div>
+                            <div className="text-xs text-gray-600">Marks: {marks}</div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 text-gray-600">
+                              <Calendar className="h-4 w-4" />
+                              <span className="text-xs">{dateStr}</span>
+                            </div>
+                            <Link href={`/faculty/student-results/${sid}/${testId}`} className="text-blue-700 text-xs font-medium">View Detail</Link>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                   <div>
-                    <Link href={`/faculty/student-results/${r.student?.id || r.studentId}` } className="text-blue-700 font-medium">View Detail</Link>
+                    <Link href={`/faculty/student-results/${sid}`} className="text-blue-700 font-medium">All Results</Link>
                   </div>
                 </CardContent>
               </Card>

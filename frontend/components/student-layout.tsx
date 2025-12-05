@@ -2,7 +2,7 @@
 import type React from "react"
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { GraduationCap, Home, BookOpen, FileText, BarChart2, User, LogOut } from "lucide-react"
+import { GraduationCap, Home, BookOpen, FileText, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useState, useEffect } from "react"
@@ -107,10 +107,10 @@ export function StudentLayout({ children }: StudentLayoutProps) {
             <div className="bg-white/80 backdrop-blur shadow-2xl rounded-2xl border border-blue-100 p-4 flex flex-col gap-1 w-full transition-all">
               <div className="space-y-1">
                 <NavItem href="/student/dashboard" icon={<Home className="h-5 w-5" />} label="Dashboard" />
-                <NavItem href="/student/tests" icon={<BookOpen className="h-5 w-5" />} label="Available Tests" />
-                <NavItem href="/student/results" icon={<FileText className="h-5 w-5" />} label="My Results" />
-                <NavItem href="/student/analytics" icon={<BarChart2 className="h-5 w-5" />} label="Analytics" />
                 <NavItem href="/student/profile" icon={<User className="h-5 w-5" />} label="Profile" />
+                <NavItem href="/student/tests" icon={<BookOpen className="h-5 w-5" />} label="Available Tests" />
+                <NavItem href="/student/results" icon={<FileText className="h-5 w-5" />} label="Results" />
+                
               </div>
 
               <div className="mt-auto">
