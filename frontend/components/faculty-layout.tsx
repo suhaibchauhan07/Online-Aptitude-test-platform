@@ -25,7 +25,8 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
   const [loading, setLoading] = useState(true);
 
   const pathname = usePathname();
-  const hideSidebar = pathname === '/faculty/login' || pathname === '/faculty/register';
+  const hideSidebar = pathname === '/faculty/login' || pathname === '/faculty/register' || pathname === '/faculty/forgot-password';
+  const hideHeader = pathname === '/faculty/forgot-password';
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -62,24 +63,26 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <GraduationCap className="h-7 w-7 text-blue-700 drop-shadow" />
-            <span className="font-semibold text-xl tracking-wide">
-              <span className="text-green-600">JMIT</span>
-              <span className="text-blue-500"> Online Aptitude Test System</span>
-            </span>
-          </div>
+      {hideHeader ? null : (
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+          <div className="container flex h-16 items-center justify-between">
+            <div className="flex items-center gap-2">
+              <GraduationCap className="h-7 w-7 text-blue-700 drop-shadow" />
+              <span className="font-semibold text-xl tracking-wide">
+                <span className="text-green-600">JMIT</span>
+                <span className="text-blue-500"> Online Aptitude Test System</span>
+              </span>
+            </div>
 
-          <div className="flex items-center gap-4">
-            <Avatar>
-              <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Faculty" />
-              <AvatarFallback></AvatarFallback>
-            </Avatar>
+            <div className="flex items-center gap-4">
+              <Avatar>
+                <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Faculty" />
+                <AvatarFallback></AvatarFallback>
+              </Avatar>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex">

@@ -52,8 +52,8 @@ export default function FacultyRegister() {
       return
     }
 
-    if (!/^\d{10}$/.test(formData.phone)) {
-      setError("Please enter a valid 10-digit phone number")
+    if (!/^\+91\d{10}$/.test(formData.phone)) {
+      setError("Phone must be +91 followed by 10 digits")
       return
     }
 
@@ -137,10 +137,12 @@ export default function FacultyRegister() {
                 <Input
                   id="phone"
                   name="phone"
-                  placeholder="Enter your phone number"
+                  type="tel"
+                  placeholder="+91XXXXXXXXXX"
                   value={formData.phone}
                   onChange={handleChange}
                   className="focus:ring-2 focus:ring-blue-400 transition-all duration-200 border border-gray-200 rounded-xl py-3 text-base md:text-lg"
+                  maxLength={13}
                   required
                 />
               </div>

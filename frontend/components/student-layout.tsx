@@ -6,6 +6,7 @@ import { GraduationCap, Home, BookOpen, FileText, User, LogOut } from "lucide-re
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 
 interface StudentLayoutProps {
   children: ReactNode
@@ -21,7 +22,7 @@ export function StudentLayout({ children }: StudentLayoutProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfile = async () => {   
       try {
         const token = localStorage.getItem('token');
         const storedStudent = localStorage.getItem('student');
@@ -102,6 +103,13 @@ export function StudentLayout({ children }: StudentLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex">
         {/* Sidebar */}
+        {(() => {
+          const pathname = usePathname()
+          const hideSidebar = pathname === "/student/forgot-password"
+          if (hideSidebar) {
+            return null
+          }
+          return (
         <aside className="w-16 md:w-64 bg-transparent shrink-0 flex flex-col items-center py-6 animate-fade-in">
           <nav className="w-full flex flex-col h-full">
             <div className="bg-white/80 backdrop-blur shadow-2xl rounded-2xl border border-blue-100 p-4 flex flex-col gap-1 w-full transition-all">
@@ -111,11 +119,11 @@ export function StudentLayout({ children }: StudentLayoutProps) {
                 <NavItem href="/student/tests" icon={<BookOpen className="h-5 w-5" />} label="Available Tests" />
                 <NavItem href="/student/results" icon={<FileText className="h-5 w-5" />} label="Results" />
                 
-              </div>
+              </div>  
 
-              <div className="mt-auto">
+              <div className="mt-auto">   
                 <Link href="/">
-                  <Button
+                  <Button  
                     variant="ghost"
                     className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
                   >
@@ -127,6 +135,8 @@ export function StudentLayout({ children }: StudentLayoutProps) {
             </div>
           </nav>
         </aside>
+          )
+        })()}
 
         {/* Content */}
         <main className="flex-1 bg-gray-50">{children}</main>

@@ -10,7 +10,11 @@ import {
     changeFacultyPassword,
     getAllStudentResults,
     getStudentResultsByStudentId,
-    getStudentTestResultByStudentAndTest
+    getStudentTestResultByStudentAndTest,
+    requestFacultyPasswordResetOtp,
+    verifyFacultyPasswordResetOtp,
+    resetFacultyPassword,
+    lookupFacultyRegisteredPhoneByEmail
 } from '../controllers/facultyController.js';
 import uploadMiddleware from '../middleware/uploadMiddleware.js';
 import { authMiddleware, requireRole } from '../middleware/authMiddleware.js';
@@ -27,6 +31,10 @@ const router = express.Router();
 // Public routes
 router.post('/register', authSpeedLimiter, authRateLimiter, registerFaculty);
 router.post('/login', authSpeedLimiter, authRateLimiter, loginFaculty);
+router.post('/forgot-password/lookup-email', authSpeedLimiter, authRateLimiter, lookupFacultyRegisteredPhoneByEmail);
+router.post('/forgot-password/request-otp', authSpeedLimiter, authRateLimiter, requestFacultyPasswordResetOtp);
+router.post('/forgot-password/verify-otp', authSpeedLimiter, authRateLimiter, verifyFacultyPasswordResetOtp);
+router.post('/forgot-password/reset', authSpeedLimiter, authRateLimiter, resetFacultyPassword);
 
 // Protected routes
 router.get('/profile', authMiddleware, requireRole(['faculty']), getFacultyProfile);

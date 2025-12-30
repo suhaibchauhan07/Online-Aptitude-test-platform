@@ -16,7 +16,7 @@ const testSchema = new mongoose.Schema({
         required: [true, 'Duration is required'],
         min: [1, 'Duration must be at least 1 minute']
     },
-    totalMarks: { 
+    totalMarks: {         
         type: Number, 
         default: 0,
         min: [0, 'Total marks cannot be negative']

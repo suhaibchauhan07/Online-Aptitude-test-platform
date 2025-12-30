@@ -9,7 +9,11 @@ import {
     getAllTestQuestions,
     getTestQuestionsForStudent,
     getMyResults,
-    submitTest
+    submitTest,
+    requestStudentPasswordResetOtp,
+    verifyStudentPasswordResetOtp,
+    resetStudentPassword,
+    lookupStudentRegisteredPhoneByEmail
 } from '../controllers/studentController.js';
 import { 
     getAvailableTests,
@@ -28,6 +32,10 @@ const router = express.Router();
 // Public routes
 router.post('/register', authSpeedLimiter, authRateLimiter, registerStudent);
 router.post('/login', authSpeedLimiter, authRateLimiter, loginStudent);
+router.post('/forgot-password/lookup-email', authSpeedLimiter, authRateLimiter, lookupStudentRegisteredPhoneByEmail);
+router.post('/forgot-password/request-otp', authSpeedLimiter, authRateLimiter, requestStudentPasswordResetOtp);
+router.post('/forgot-password/verify-otp', authSpeedLimiter, authRateLimiter, verifyStudentPasswordResetOtp);
+router.post('/forgot-password/reset', authSpeedLimiter, authRateLimiter, resetStudentPassword);
 
 // Protected routes - apply auth middleware to all routes
 router.use(authMiddleware);

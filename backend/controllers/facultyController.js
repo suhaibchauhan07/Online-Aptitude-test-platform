@@ -6,10 +6,130 @@ import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import xlsx from 'xlsx';
 import TestQuestions from '../models/testQuestions.js';
+import fetch from 'node-fetch';
 
+const sendOtpSms = async (phone, otp) => {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_FROM_NUMBER;
+  const msgSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+  try {
+    if (sid && token && (from || msgSid)) {
+      const body = new URLSearchParams();
+      if (msgSid) body.append('MessagingServiceSid', msgSid);
+      else body.append('From', from);
+      const e164 = `+91${String(phone).replace(/\D/g, '').slice(-10)}`;
+      body.append('To', e164);
+      body.append('Body', `Your OTP is ${otp}`);
+      const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+        method: 'POST',
+        headers: { Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64') },
+        body
+      });
+      if (res.ok) return true;
+      const t = await res.text();
+      console.error('Twilio SMS error', res.status, t);
+    }
+  } catch (e) {
+    console.error('Twilio send error', e.message);
+  }
+  const textlocalKey = process.env.TEXTLOCAL_API_KEY;
+  const textlocalSender = process.env.TEXTLOCAL_SENDER;
+  try {
+    if (textlocalKey && textlocalSender) {
+      const body = new URLSearchParams();
+      body.append('apikey', textlocalKey);
+      const tl = `91${String(phone).replace(/\D/g, '').slice(-10)}`;
+      body.append('numbers', tl);
+      body.append('sender', textlocalSender);
+      body.append('message', `Your OTP is ${otp}`);
+      const res = await fetch('https://api.textlocal.in/send/', {
+        method: 'POST',
+        body
+      });
+      const data = await res.json();
+      if (data && data.status === 'success') return true;
+      console.error('Textlocal SMS error', data);
+    }
+  } catch (e) {
+    console.error('Textlocal send error', e.message);
+  }
+  return false;
+};
+
+const normalizeIndianPhone = (value) => {
+  const d = String(value || '').replace(/\D/g, '');
+  if (!d) return '';
+  return d.endsWith(d.slice(-10)) ? d.slice(-10) : d.slice(-10);
+};
+
+const startTwilioVerify = async (phone) => {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  try {
+    if (sid && token && serviceSid) {
+      const e164 = `+91${String(phone).replace(/\D/g, '').slice(-10)}`;
+      const body = new URLSearchParams();
+      body.append('To', e164);
+      body.append('Channel', 'sms');
+      const res = await fetch(`https://verify.twilio.com/v2/Services/${serviceSid}/Verifications`, {
+        method: 'POST',
+        headers: { 
+          Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body
+      });
+      if (res.ok) return true;
+      const t = await res.text();
+      console.error('Twilio Verify start error', res.status, t);
+    }
+  } catch (e) {
+    console.error('Twilio Verify start exception', e.message);
+  }
+  return false;
+};
+
+const checkTwilioVerify = async (phone, code) => {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  try {
+    if (sid && token && serviceSid) {
+      const e164 = `+91${String(phone).replace(/\D/g, '').slice(-10)}`;
+      const body = new URLSearchParams();
+      body.append('To', e164);
+      body.append('Code', String(code));
+      const res = await fetch(`https://verify.twilio.com/v2/Services/${serviceSid}/VerificationCheck`, {
+        method: 'POST',
+        headers: { 
+          Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return String(data.status || '').toLowerCase() === 'approved';
+      }
+      const t = await res.text();
+      console.error('Twilio Verify check error', res.status, t);
+    }
+  } catch (e) {
+    console.error('Twilio Verify check exception', e.message);
+  }
+  return false;
+};
 export const registerFaculty = async (req, res) => {
     try {
         const { name, email, password, department, phone } = req.body;
+
+        // Validate Indian phone number in E.164 style +91XXXXXXXXXX
+        if (!/^\+91\d{10}$/.test(String(phone))) {
+            return res.status(400).json({ message: 'Phone must be in format +91 followed by 10 digits' });
+        }
+        const normalizedPhone = normalizeIndianPhone(phone);
 
         // Convert department to uppercase to match enum values
         const normalizedDepartment = department.toUpperCase();
@@ -27,7 +147,7 @@ export const registerFaculty = async (req, res) => {
             email: normalizedEmail,
             password: hashedPassword,
             department: normalizedDepartment,
-            phone,
+            phone: normalizedPhone,
             isActive: true
         });
 
@@ -420,6 +540,177 @@ export const changeFacultyPassword = async (req, res) => {
     await faculty.save();
 
     res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const requestFacultyPasswordResetOtp = async (req, res) => {
+  try {
+    const { phone, email } = req.body;
+    if (!/^\+91\d{10}$/.test(String(phone))) {
+      return res.status(400).json({ message: 'Phone must be in format +91 followed by 10 digits' });
+    }
+    const normalizedPhone = normalizeIndianPhone(phone);
+    if (email && (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email))) {
+      return res.status(400).json({ message: 'Valid email is required' });
+    }
+    if (!normalizedPhone || !/^\d{10}$/.test(normalizedPhone)) {
+      return res.status(400).json({ message: 'Valid 10-digit phone is required' });
+    }
+    let faculty;
+    if (email) {
+      faculty = await Faculty.findOne({ email: email.toLowerCase().trim() });
+      if (!faculty) {
+        return res.status(404).json({ message: 'Account not found for this email' });
+      }
+      if (String(faculty.phone) !== String(normalizedPhone)) {
+        return res.status(400).json({ message: 'Phone does not match the registered number for this email' });
+      }
+    } else {
+      faculty = await Faculty.findOne({ phone: normalizedPhone });
+    }
+    if (!faculty) {
+      return res.status(404).json({ message: 'Account not found for this phone' });
+    }
+    const verifyService = String(process.env.TWILIO_VERIFY_SERVICE_SID || '');
+    let otp;
+    if (!verifyService) {
+      otp = String(Math.floor(100000 + Math.random() * 900000));
+      const salt = await bcryptjs.genSalt(10);
+      const hash = await bcryptjs.hash(otp, salt);
+      faculty.resetOtpHash = hash;
+    } else {
+      faculty.resetOtpHash = null;
+    }
+    faculty.resetOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    faculty.resetOtpAttempts = 0;
+    faculty.resetOtpVerified = false;
+    await faculty.save();
+    if (verifyService) {
+      const started = await startTwilioVerify(normalizedPhone);
+      if (!started) {
+        return res.status(500).json({ message: 'Failed to send OTP' });
+      }
+      return res.status(200).json({ message: 'OTP sent to registered phone' });
+    } else {
+      const shouldExposeOtp = String(process.env.OTP_DEBUG_DISPLAY || '').toLowerCase() === 'true';
+      const twilioConfigured = Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && (process.env.TWILIO_FROM_NUMBER || process.env.TWILIO_MESSAGING_SERVICE_SID));
+      const textlocalConfigured = Boolean(process.env.TEXTLOCAL_API_KEY && process.env.TEXTLOCAL_SENDER);
+      const hasSmsProvider = twilioConfigured || textlocalConfigured;
+      if (shouldExposeOtp) {
+        return res.status(200).json({ message: 'OTP generated', otpPreview: otp });
+      }
+      if (!hasSmsProvider) {
+        return res.status(500).json({ message: 'SMS service not configured' });
+      }
+      const sent = await sendOtpSms(normalizedPhone, otp);
+      if (!sent) {
+        return res.status(500).json({ message: 'Failed to send OTP' });
+      }
+      return res.status(200).json({ message: 'OTP sent to registered phone' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error generating OTP', error: error.message });
+  }
+};
+
+export const lookupFacultyRegisteredPhoneByEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+      return res.status(400).json({ message: 'Valid email is required' });
+    }
+    const faculty = await Faculty.findOne({ email: email.toLowerCase().trim() });
+    if (!faculty) {
+      return res.status(404).json({ message: 'Account not found for this email' });
+    }
+    const phone = String(faculty.phone || '');
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ message: 'Registered phone is invalid' });
+    }
+    const prefix = phone.slice(0, 2);
+    const suffix = phone.slice(7, 10);
+    const maskedPhone = `${prefix}*${suffix}`;
+    res.status(200).json({ maskedPhone, prefix, suffix, email: faculty.email });
+  } catch (error) {
+    res.status(500).json({ message: 'Error looking up email', error: error.message });
+  }
+};
+
+export const verifyFacultyPasswordResetOtp = async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+    if (!phone || !otp) {
+      return res.status(400).json({ message: 'Phone and OTP are required' });
+    }
+    if (!/^\+91\d{10}$/.test(String(phone))) {
+      return res.status(400).json({ message: 'Phone must be in format +91 followed by 10 digits' });
+    }
+    const normalizedPhone = normalizeIndianPhone(phone);
+    const faculty = await Faculty.findOne({ phone: normalizedPhone });
+    if (!faculty || !faculty.resetOtpExpiresAt) {
+      return res.status(400).json({ message: 'No active OTP. Request a new one.' });
+    }
+    if (new Date() > new Date(faculty.resetOtpExpiresAt)) {
+      return res.status(400).json({ message: 'OTP expired. Request a new one.' });
+    }
+    if (faculty.resetOtpAttempts >= 5) {
+      return res.status(429).json({ message: 'Too many attempts. Request a new OTP.' });
+    }
+    const verifyService = String(process.env.TWILIO_VERIFY_SERVICE_SID || '');
+    let ok = false;
+    if (verifyService) {
+      ok = await checkTwilioVerify(normalizedPhone, otp);
+    } else {
+      ok = await bcryptjs.compare(String(otp), faculty.resetOtpHash);
+    }
+    faculty.resetOtpAttempts = (faculty.resetOtpAttempts || 0) + 1;
+    if (!ok) {
+      await faculty.save();
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+    faculty.resetOtpVerified = true;
+    await faculty.save();
+    const token = jwt.sign(
+      { id: faculty._id, role: 'faculty', purpose: 'password_reset' },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '10m' }
+    );
+    res.status(200).json({ message: 'OTP verified', resetToken: token });
+  } catch (error) {
+    res.status(500).json({ message: 'Error verifying OTP', error: error.message });
+  }
+};
+
+export const resetFacultyPassword = async (req, res) => {
+  try {
+    const { resetToken, newPassword } = req.body;
+    if (!resetToken || !newPassword) {
+      return res.status(400).json({ message: 'Reset token and new password are required' });
+    }
+    const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+    let decoded;
+    try {
+      decoded = jwt.verify(resetToken, jwtSecret);
+    } catch (e) {
+      return res.status(401).json({ message: 'Invalid or expired reset token' });
+    }
+    if (decoded.purpose !== 'password_reset' || decoded.role !== 'faculty') {
+      return res.status(401).json({ message: 'Invalid reset token' });
+    }
+    const faculty = await Faculty.findById(decoded.id);
+    if (!faculty || !faculty.resetOtpVerified) {
+      return res.status(400).json({ message: 'OTP not verified' });
+    }
+    const salt = await bcryptjs.genSalt(10);
+    faculty.password = await bcryptjs.hash(newPassword, salt);
+    faculty.resetOtpHash = null;
+    faculty.resetOtpExpiresAt = null;
+    faculty.resetOtpAttempts = 0;
+    faculty.resetOtpVerified = false;
+    await faculty.save();
+    res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

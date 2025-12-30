@@ -60,6 +60,22 @@ const facultySchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  resetOtpHash: {
+    type: String,
+    default: null
+  },
+  resetOtpExpiresAt: {
+    type: Date,
+    default: null
+  },
+  resetOtpAttempts: {
+    type: Number,
+    default: 0
+  },
+  resetOtpVerified: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

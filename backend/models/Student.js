@@ -61,6 +61,22 @@ const studentSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  resetOtpHash: {
+    type: String,
+    default: null
+  },
+  resetOtpExpiresAt: {
+    type: Date,
+    default: null
+  },
+  resetOtpAttempts: {
+    type: Number,
+    default: 0
+  },
+  resetOtpVerified: {
+    type: Boolean,
+    default: false
+  },
   testHistory: [{
     testId: { type: mongoose.Schema.Types.ObjectId, ref: 'Test' },
     score: Number,
