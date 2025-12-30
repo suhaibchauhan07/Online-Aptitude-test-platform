@@ -38,8 +38,8 @@ app.set('trust proxy', 1);
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
-    'https://online-aptitude-test-platform.vercel.app',
-    'https://online-aptitude-test-platform-git-main-<team>.vercel.app',
+    'https://online-aptitude-test-platform-git-67d38a-suhaib-chauhans-projects.vercel.app',
+    'https://online-aptitude-test-platform-7fktx3847.vercel.app',
 
     process.env.FRONTEND_ORIGIN
 ].filter(Boolean);
