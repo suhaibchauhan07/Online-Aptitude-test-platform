@@ -24,11 +24,11 @@ export default function StudentRegister() {
     rollNumber: "",
     className: "",
     section: "",
+    department: "",
     email: "",
     phone: "",
     password: "",
     confirmPassword: "",
-    department: "",
     year: ""
   })
 

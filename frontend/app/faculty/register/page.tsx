@@ -22,7 +22,6 @@ export default function FacultyRegister() {
     name: "",
     email: "",
     phone: "",
-    department: "",
     password: "",
     confirmPassword: "",
   })
@@ -37,7 +36,7 @@ export default function FacultyRegister() {
     setError("")
 
     // Basic validation
-    if (Object.values(formData).some((value) => !value)) {
+    if ([formData.name, formData.email, formData.phone, formData.password, formData.confirmPassword].some((value) => !value)) {
       setError("Please fill in all fields")
       return
     }
@@ -69,7 +68,6 @@ export default function FacultyRegister() {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          department: formData.department,
           password: formData.password,
           facultyId: formData.email.split('@')[0] // Generate facultyId from email
         }),
@@ -143,18 +141,6 @@ export default function FacultyRegister() {
                   onChange={handleChange}
                   className="focus:ring-2 focus:ring-blue-400 transition-all duration-200 border border-gray-200 rounded-xl py-3 text-base md:text-lg"
                   maxLength={13}
-                  required
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="department" className="font-semibold text-base md:text-lg text-[#4a4e69]">Department<span className="text-red-500">*</span></Label>
-                <Input
-                  id="department"
-                  name="department"
-                  placeholder="Enter your department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  className="focus:ring-2 focus:ring-blue-400 transition-all duration-200 border border-gray-200 rounded-xl py-3 text-base md:text-lg"
                   required
                 />
               </div>

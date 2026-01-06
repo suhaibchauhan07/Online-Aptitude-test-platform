@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import API_BASE_URL from "@/app/config/api";
 import { Button } from "@/components/ui/button";
@@ -8,16 +7,10 @@ import { Pencil } from "lucide-react";
 
 interface ProfileData {
   profilePicture?: string;
-  firstName: string;
-  lastName: string;
-  username: string;
+  name: string;
   email: string;
   phone: string;
-  department: string;
-  country: string;
-  city: string;
-  pinCode: string;
-  location: string;
+  location?: string;
   gender?: string;
 }
 
@@ -25,6 +18,7 @@ interface TiltProps extends React.HTMLAttributes<HTMLDivElement> { className?: s
 function TiltCard({ className, children, ...rest }: TiltProps) {
   const [style, setStyle] = React.useState<any>({})
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (rest.onMouseMove) rest.onMouseMove(e);
     const rect = e.currentTarget.getBoundingClientRect()
     const x = (e.clientX - rect.left) / rect.width
     const y = (e.clientY - rect.top) / rect.height
@@ -32,14 +26,17 @@ function TiltCard({ className, children, ...rest }: TiltProps) {
     const rY = (x - 0.5) * 6
     setStyle({ transform: `perspective(1000px) rotateX(${rX}deg) rotateY(${rY}deg)` })
   }
-  const handleLeave = () => setStyle({ transform: `perspective(1000px) rotateX(0deg) rotateY(0deg)` })
+  const handleLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (rest.onMouseLeave) rest.onMouseLeave(e);
+    setStyle({ transform: `perspective(1000px) rotateX(0deg) rotateY(0deg)` })
+  }
   return (
     <div
+      {...rest}
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
       style={style}
       className={`transition-transform duration-300 will-change-transform ${className || ""}`}
-      {...rest}
     >
       {children}
     </div>
@@ -49,16 +46,10 @@ function TiltCard({ className, children, ...rest }: TiltProps) {
 export default function FacultyProfilePage() {
   const [profile, setProfile] = useState<ProfileData>({
     profilePicture: "",
-    firstName: "",
-    lastName: "",
-    username: "",
+    name: "",
     email: "",
     phone: "",
-    department: "",
-    country: "",
-    city: "",
-    pinCode: "",
-    location: "Leeds, United Kingdom",
+    location: "",
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -84,16 +75,10 @@ export default function FacultyProfilePage() {
       const data = await response.json();
       setProfile({
         profilePicture: data.profilePicture || "",
-        firstName: data.firstName || "",
-        lastName: data.lastName || "",
-        username: data.username || "",
+        name: data.name || "",
         email: data.email || "",
         phone: data.phone || "",
-        department: data.department || "",
-        country: data.country || "",
-        city: data.city || "",
-        pinCode: data.pinCode || "",
-        location: data.location || "Leeds, United Kingdom",
+        location: data.location || (data.city && data.country ? `${data.city}, ${data.country}` : ""),
         gender: data.gender || "",
       });
     } catch (err: any) {
@@ -217,7 +202,7 @@ export default function FacultyProfilePage() {
         <div className="relative">
           <Avatar className="h-28 w-28 ring-4 ring-white/70 shadow-xl">
             <AvatarImage src={profile.profilePicture || "/default-profile.png"} alt="Profile" />
-            <AvatarFallback className="text-3xl">{profile.firstName?.charAt(0) || "F"}</AvatarFallback>
+            <AvatarFallback className="text-3xl">{profile.name?.charAt(0) || "F"}</AvatarFallback>
           </Avatar>
           <input
             type="file"
@@ -232,26 +217,11 @@ export default function FacultyProfilePage() {
           </label>
         </div>
         <div className="flex-1 text-center md:text-left">
-          <div className="text-2xl font-extrabold tracking-tight mb-1">{profile.username}</div>
-          <div className="text-lg text-gray-700 font-medium mb-1">{profile.department}</div>
-          {(profile.city || profile.country) && (
-            <div className="text-base text-gray-400">
-              {[profile.city, profile.country].filter(Boolean).join(", ")}
-            </div>
-          )}
+          <div className="text-3xl font-extrabold tracking-tight mb-1 text-gray-900">{profile.name}</div>
         </div>
-        <Button size="sm" className="self-center md:self-start bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95" onClick={() => setEditSection("top")}>Edit <Pencil className="h-4 w-4 ml-1" /></Button>
       </TiltCard>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <TiltCard className="p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 shadow-md">
-          <div className="text-xs text-blue-700">Department</div>
-          <div className="text-sm font-semibold text-blue-900">{profile.department || "-"}</div>
-        </TiltCard>
-        <TiltCard className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 shadow-md">
-          <div className="text-xs text-indigo-700">Location</div>
-          <div className="text-sm font-semibold text-indigo-900">{profile.location || "-"}</div>
-        </TiltCard>
         <TiltCard className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-100 shadow-md">
           <div className="text-xs text-emerald-700">Email</div>
           <div className="text-sm font-semibold text-emerald-900 truncate">{profile.email || "-"}</div>
@@ -262,37 +232,20 @@ export default function FacultyProfilePage() {
         </TiltCard>
       </div>
 
-      {/* Two-column grid for Personal Info and Address */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-10">
-        {/* Personal Information Card */}
+      {/* Personal Information Card */}
+      <div className="grid grid-cols-1 gap-6 sm:gap-8 mb-10">
         <TiltCard className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-xl p-6 sm:p-8">
           <div className="flex justify-between items-center mb-6">
             <div className="font-semibold text-xl">Personal Information</div>
             <Button size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95" onClick={() => setEditSection("personal")}>Edit <Pencil className="h-4 w-4 ml-1" /></Button>
           </div>
-          <div className="grid grid-cols-1 gap-5">
-            <div>
-              <div className="text-xs text-gray-400">First Name</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="col-span-1 md:col-span-2">
+              <div className="text-xs text-gray-400">Full Name</div>
               {editSection === "personal" ? (
-                <input name="firstName" value={profile.firstName} onChange={handleChange} className="border rounded px-3 py-2 w-full text-lg" />
+                <input name="name" value={profile.name} onChange={handleChange} className="border rounded px-3 py-2 w-full text-lg" />
               ) : (
-                <div className="font-semibold text-lg">{profile.firstName}</div>
-              )}
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">Last Name</div>
-              {editSection === "personal" ? (
-                <input name="lastName" value={profile.lastName} onChange={handleChange} className="border rounded px-3 py-2 w-full text-lg" />
-              ) : (
-                <div className="font-semibold text-lg">{profile.lastName}</div>
-              )}
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">Username</div>
-              {editSection === "personal" ? (
-                <input name="username" value={profile.username} onChange={handleChange} className="border rounded px-3 py-2 w-full text-lg" />
-              ) : (
-                <div className="font-semibold text-lg">{profile.username}</div>
+                <div className="font-semibold text-lg">{profile.name}</div>
               )}
             </div>
             <div>
@@ -311,66 +264,10 @@ export default function FacultyProfilePage() {
                 <div className="font-semibold text-lg">{profile.phone}</div>
               )}
             </div>
-            <div>
-              <div className="text-xs text-gray-400">Department</div>
-              {editSection === "personal" ? (
-                <input name="department" value={profile.department} onChange={handleChange} className="border rounded px-3 py-2 w-full text-lg" />
-              ) : (
-                <div className="font-semibold text-lg">{profile.department}</div>
-              )}
-            </div>
-            {/* Example extra field */}
-            <div>
-              <div className="text-xs text-gray-400">Gender</div>
-              {editSection === "personal" ? (
-                <input name="gender" value={profile.gender || ""} onChange={handleChange} className="border rounded px-3 py-2 w-full text-lg" />
-              ) : (
-                <div className="font-semibold text-lg">{profile.gender || "-"}</div>
-              )}
-            </div>
           </div>
           {editSection === "personal" && (
             <div className="mt-6 flex gap-2">
               <Button size="sm" onClick={() => handleSave("personal")}>Save</Button>
-              <Button size="sm" variant="outline" onClick={() => setEditSection(null)}>Cancel</Button>
-            </div>
-          )}
-        </TiltCard>
-        {/* Address Card */}
-        <TiltCard className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-xl p-6 sm:p-8">
-          <div className="flex justify-between items-center mb-6">
-            <div className="font-semibold text-xl">Address</div>
-            <Button size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95" onClick={() => setEditSection("address")}>Edit <Pencil className="h-4 w-4 ml-1" /></Button>
-          </div>
-          <div className="grid grid-cols-1 gap-5">
-            <div>
-              <div className="text-xs text-gray-400">Country</div>
-              {editSection === "address" ? (
-                <input name="country" value={profile.country} onChange={handleChange} className="border rounded px-3 py-2 w-full text-lg" />
-              ) : (
-                <div className="font-semibold text-lg">{profile.country}</div>
-              )}
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">City/State</div>
-              {editSection === "address" ? (
-                <input name="city" value={profile.city} onChange={handleChange} className="border rounded px-3 py-2 w-full text-lg" />
-              ) : (
-                <div className="font-semibold text-lg">{profile.city}</div>
-              )}
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">Pin Code</div>
-              {editSection === "address" ? (
-                <input name="pinCode" value={profile.pinCode} onChange={handleChange} className="border rounded px-3 py-2 w-full text-lg" />
-              ) : (
-                <div className="font-semibold text-lg">{profile.pinCode}</div>
-              )}
-            </div>
-          </div>
-          {editSection === "address" && (
-            <div className="mt-6 flex gap-2">
-              <Button size="sm" onClick={() => handleSave("address")}>Save</Button>
               <Button size="sm" variant="outline" onClick={() => setEditSection(null)}>Cancel</Button>
             </div>
           )}

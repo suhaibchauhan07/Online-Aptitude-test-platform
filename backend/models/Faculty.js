@@ -29,14 +29,9 @@ const facultySchema = new mongoose.Schema({
     minlength: [6, 'Password must be at least 6 characters long']
   },
   department: { 
-    type: String, 
-    required: [true, 'Department is required'],
-    trim: true,
-    uppercase: true,
-    enum: {
-      values: ['CSE', 'ECE', 'ME', 'CE', 'BCA', 'MCA'],
-      message: '{VALUE} is not a valid department'
-    }
+    type: String,
+    required: false,
+    trim: true
   },
   phone: {
     type: String,

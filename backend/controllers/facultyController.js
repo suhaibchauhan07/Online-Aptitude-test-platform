@@ -123,7 +123,7 @@ const checkTwilioVerify = async (phone, code) => {
 };
 export const registerFaculty = async (req, res) => {
     try {
-        const { name, email, password, department, phone } = req.body;
+        const { name, email, password, phone } = req.body;
 
         // Validate Indian phone number in E.164 style +91XXXXXXXXXX
         if (!/^\+91\d{10}$/.test(String(phone))) {
@@ -131,9 +131,6 @@ export const registerFaculty = async (req, res) => {
         }
         const normalizedPhone = normalizeIndianPhone(phone);
 
-        // Convert department to uppercase to match enum values
-        const normalizedDepartment = department.toUpperCase();
-        
         // Convert email to lowercase
         const normalizedEmail = email.toLowerCase();
 
@@ -146,7 +143,6 @@ export const registerFaculty = async (req, res) => {
             name,
             email: normalizedEmail,
             password: hashedPassword,
-            department: normalizedDepartment,
             phone: normalizedPhone,
             isActive: true
         });
@@ -165,7 +161,6 @@ export const registerFaculty = async (req, res) => {
                 id: faculty._id,
                 name: faculty.name,
                 email: faculty.email,
-                department: faculty.department,
                 phone: faculty.phone
             }
         });
@@ -392,10 +387,8 @@ export const updateFacultyProfile = async (req, res) => {
     try {
         const {
             name,
-            username,
             email,
             phone,
-            department,
             country,
             city,
             pinCode,
@@ -408,15 +401,21 @@ export const updateFacultyProfile = async (req, res) => {
         }
 
         // Update all fields if provided
-        if (name) faculty.name = name;
-        if (username) faculty.username = username;
-        if (email) faculty.email = email;
-        if (phone) faculty.phone = phone;
-        if (department) faculty.department = department;
-        if (country) faculty.country = country;
-        if (city) faculty.city = city;
-        if (pinCode) faculty.pinCode = pinCode;
-        if (profilePicture) faculty.profilePicture = profilePicture;
+        if (typeof name === 'string' && name.trim()) faculty.name = name.trim();
+        // username is not updatable
+        if (typeof email === 'string' && email.trim()) faculty.email = email.trim().toLowerCase();
+        if (typeof phone === 'string' && phone.trim()) {
+            const normalizedPhone = normalizeIndianPhone(phone);
+            if (!/^\d{10}$/.test(normalizedPhone)) {
+                return res.status(400).json({ message: 'Phone must be 10 digits' });
+            }
+            faculty.phone = normalizedPhone;
+        }
+        // department updates removed
+        if (typeof country === 'string' && country.trim()) faculty.country = country.trim();
+        if (typeof city === 'string' && city.trim()) faculty.city = city.trim();
+        if (typeof pinCode === 'string' && pinCode.trim()) faculty.pinCode = pinCode.trim();
+        if (typeof profilePicture === 'string' && profilePicture.trim()) faculty.profilePicture = profilePicture.trim();
 
         await faculty.save();
 
