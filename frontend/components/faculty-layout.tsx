@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import CreateTestModal from "@/app/components/CreateTestModal"
 import { useState, useEffect } from "react"
 import { usePathname } from 'next/navigation'
+import API_BASE_URL from "@/app/config/api"
 
 interface FacultyLayoutProps {
   children: ReactNode
@@ -31,7 +32,7 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/faculty/profile', {
+        const response = await fetch(`${API_BASE_URL}/faculty/profile`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }

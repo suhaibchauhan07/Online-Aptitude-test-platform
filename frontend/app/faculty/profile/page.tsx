@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, ChangeEvent, FormEvent } from "react";
+import API_BASE_URL from "@/app/config/api";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Pencil } from "lucide-react";
@@ -74,7 +75,7 @@ export default function FacultyProfilePage() {
   // Move fetchProfile here
   const fetchProfile = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/faculty/profile", {
+      const response = await fetch(`${API_BASE_URL}/faculty/profile`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -114,7 +115,7 @@ export default function FacultyProfilePage() {
     setUploading(true);
     setError("");
     try {
-      const response = await fetch("http://localhost:5000/api/faculty/profile-picture", {
+      const response = await fetch(`${API_BASE_URL}/faculty/profile-picture`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -138,7 +139,7 @@ export default function FacultyProfilePage() {
   const handleSave = async (section: string) => {
     setError("");
     try {
-      const response = await fetch("http://localhost:5000/api/faculty/profile", {
+      const response = await fetch(`${API_BASE_URL}/faculty/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -167,7 +168,7 @@ export default function FacultyProfilePage() {
       return;
     }
     try {
-      const response = await fetch("http://localhost:5000/api/faculty/change-password", {
+      const response = await fetch(`${API_BASE_URL}/faculty/change-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -46,6 +46,8 @@ export default function FacultyLogin() {
     setIsLoading(true)
 
     try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 20000)
       const response = await fetch(`${API_BASE_URL}/faculty/login`, {
         method: 'POST',
         headers: {
@@ -55,7 +57,9 @@ export default function FacultyLogin() {
           email: formData.email,
           password: formData.password
         }),
+        signal: controller.signal
       });
+      clearTimeout(timeout)
 
       const data = await response.json();
       
@@ -76,7 +80,7 @@ export default function FacultyLogin() {
       // Login successful, redirect to dashboard
       router.push('/faculty/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      setError(err instanceof Error ? (err.name === 'AbortError' ? 'Login timed out. Please try again.' : err.message) : 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

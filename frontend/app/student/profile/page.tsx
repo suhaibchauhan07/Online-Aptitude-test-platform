@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import API_BASE_URL from "@/app/config/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -47,7 +48,7 @@ export default function StudentProfilePage() {
 
         const token = localStorage.getItem("token");
         if (!token) return;
-        const res = await fetch("http://localhost:5000/api/student/profile", {
+        const res = await fetch(`${API_BASE_URL}/student/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -100,7 +101,7 @@ export default function StudentProfilePage() {
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        const res = await fetch("http://localhost:5000/api/student/profile", {
+        const res = await fetch(`${API_BASE_URL}/student/profile`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",

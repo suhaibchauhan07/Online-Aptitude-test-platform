@@ -43,19 +43,23 @@ export default function StudentLogin() {
     setIsLoading(true)
 
     try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 20000)
       const response = await fetch(`${API_BASE_URL}/student/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          rollNo: formData.rollNumber,
+          rollNumber: formData.rollNumber,
           password: formData.password
         }),
+        signal: controller.signal
       });
+      clearTimeout(timeout)
 
       const data = await response.json();
-
+      
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error("Invalid roll number. Please check and try again.");
@@ -73,7 +77,7 @@ export default function StudentLogin() {
       // Login successful, redirect to dashboard
       router.push('/student/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      setError(err instanceof Error ? (err.name === 'AbortError' ? 'Login timed out. Please try again.' : err.message) : 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

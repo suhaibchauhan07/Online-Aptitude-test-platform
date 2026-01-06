@@ -13,6 +13,9 @@ import {
     globalSpeedLimiter
 } from './middleware/rateLimitMiddleware.js';
 
+mongoose.set('bufferCommands', false);
+mongoose.set('strictQuery', true);
+
 // Suppress deprecation warnings
 process.removeAllListeners('warning');
 
@@ -84,19 +87,20 @@ const connectDB = async () => {
         const conn = await mongoose.connect(process.env.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 45000,
-            family: 4
+            serverSelectionTimeoutMS: 10000,
+            connectTimeoutMS: 10000,
+            socketTimeoutMS: 30000,
+            family: 4,
+            keepAlive: true,
+            keepAliveInitialDelay: 300000
         });
         console.log(`Connected to MongoDB: ${conn.connection.host}`);
-        
-        // Verify connection and log available collections
         const collections = await mongoose.connection.db.listCollections().toArray();
         console.log('Available collections:', collections.map(c => c.name));
+        return true;
     } catch (error) {
         console.error('MongoDB connection error:', error);
-        // Retry connection after 5 seconds
-        setTimeout(connectDB, 5000);
+        throw error;
     }
 };
 
@@ -113,6 +117,19 @@ if (process.env.NODE_ENV === 'development') {
         next();
     });
 }
+
+app.get('/health', (req, res) => {
+    const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+    const state = states[mongoose.connection.readyState] || 'unknown';
+    res.status(200).json({ status: 'ok', db: state });
+});
+
+app.use((req, res, next) => {
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ message: 'Service unavailable: database not connected' });
+    }
+    next();
+});
 
 // Routes with proper error handling
 app.use('/api/student', studentTestRoutes);
@@ -135,7 +152,16 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log(`CORS enabled for: ${allowedOrigins.join(', ')}`);
-});
+const start = async () => {
+    try {
+        await connectDB();
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+            console.log(`CORS enabled for: ${allowedOrigins.join(', ')}`);
+        });
+    } catch (err) {
+        console.error('Initial DB connection failed. Retrying in 5s...');
+        setTimeout(start, 5000);
+    }
+};
+start();
