@@ -210,18 +210,19 @@ export const registerStudent = async (req, res) => {
 // Login student
 export const loginStudent = async (req, res) => {
     try {
-        const { rollNo, password } = req.body;
+        const { rollNo, rollNumber, password } = req.body;
+        const finalRollNo = rollNo || rollNumber;
 
-        if (!rollNo || !password) {
+        if (!finalRollNo || !password) {
             return res.status(400).json({ message: "Roll number and password are required" });
         }
 
         // Normalize roll number
-        const normalizedRollNo = rollNo.toUpperCase().trim();
+        const normalizedRollNo = finalRollNo.toUpperCase().trim();
 
         // Add request logging
         console.log('Login attempt details:', {
-            attemptedRollNo: rollNo,
+            attemptedRollNo: finalRollNo,
             normalizedRollNo: normalizedRollNo
         });
 
@@ -239,7 +240,7 @@ export const loginStudent = async (req, res) => {
         if (!student) {
             // Try to find similar roll numbers to help user
             const similarStudents = await Student.find({
-                rollNo: { $regex: rollNo.replace(/\D/g, ''), $options: 'i' }
+                rollNo: { $regex: finalRollNo.replace(/\D/g, ''), $options: 'i' }
             }).select('rollNo').limit(3);
 
             console.log('No student found with roll number:', normalizedRollNo);
