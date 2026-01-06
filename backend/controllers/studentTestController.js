@@ -23,6 +23,7 @@ export const getAvailableTests = async (req, res) => {
     console.log('Current time:', now);    
     // More flexible filtering - if no startTime/endTime, include the test
     const tests = await Test.find({
+      status: 'published',
       $or: [
         // Tests with time constraints that are currently active
         {
@@ -76,11 +77,11 @@ export const getAvailableTests = async (req, res) => {
 // Get test details and questions
 export const getTestDetails = async (req, res) => {
   try {
-    const test = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
+    const test = await Test.findOne({ _id: req.params.testId, status: 'published' }).populate({ path: 'questions', model: 'TestQuestions' });
     if (!test) {
       return res.status(404).json({
         status: 'error',
-        message: 'Test not found'
+        message: 'Test not found or not published'
       });
     }
 
@@ -131,12 +132,12 @@ export const startTest = async (req, res) => {
       });
     }
 
-    const test = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
+    const test = await Test.findOne({ _id: req.params.testId, status: 'published' }).populate({ path: 'questions', model: 'TestQuestions' });
     if (!test) {
       console.error('Test not found:', req.params.testId);
       return res.status(404).json({
         status: 'error',
-        message: 'Test not found'
+        message: 'Test not found or not published'
       });
     }
 

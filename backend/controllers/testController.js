@@ -1,6 +1,7 @@
 import Test from "../models/Test.js";
 import UserTest from "../models/UserTest.js";
 import TestQuestion from '../models/testQuestions.js';
+import StudentTest from '../models/studentTestModel.js';
  
 
 export const getTestDetails = async (req, res) => {
@@ -15,6 +16,76 @@ export const getTestDetails = async (req, res) => {
     res.status(200).json(test);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const listMyTests = async (req, res) => {
+  try {
+    const facultyId = req.user.id;
+    const tests = await Test.find({ createdBy: facultyId })
+      .select('title description duration totalMarks startTime status createdAt updatedAt')
+      .sort({ createdAt: -1 });
+    const mongoose = (await import('mongoose')).default;
+    const ids = tests.map(t => t._id);
+    const counts = await TestQuestion.aggregate([
+      { $match: { testId: { $in: ids } } },
+      { $group: { _id: '$testId', count: { $sum: 1 }, marks: { $sum: '$marks' } } }
+    ]);
+    const map = new Map(counts.map(c => [String(c._id), { count: c.count, marks: c.marks }]));
+    const enriched = tests.map(t => {
+      const m = map.get(String(t._id)) || { count: 0, marks: t.totalMarks || 0 };
+      return {
+        id: t._id,
+        title: t.title,
+        description: t.description,
+        duration: t.duration,
+        totalMarks: m.marks ?? t.totalMarks,
+        startTime: t.startTime,
+        status: t.status,
+        questionCount: m.count,
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt
+      };
+    });
+    res.status(200).json({ tests: enriched });
+  } catch (error) {
+    res.status(500).json({ message: 'Error listing tests', error: error.message });
+  }
+};
+
+export const updateTestStatus = async (req, res) => {
+  try {
+    const facultyId = req.user.id;
+    const { testId } = req.params;
+    const { status } = req.body;
+    if (!['draft', 'published', 'archived'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+    const test = await Test.findOneAndUpdate(
+      { _id: testId, createdBy: facultyId },
+      { status },
+      { new: true }
+    ).select('title status');
+    if (!test) return res.status(404).json({ message: 'Test not found or unauthorized' });
+    res.status(200).json({ message: 'Status updated', test });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating status', error: error.message });
+  }
+};
+
+export const archiveTest = async (req, res) => {
+  try {
+    const facultyId = req.user.id;
+    const { testId } = req.params;
+    const test = await Test.findOneAndUpdate(
+      { _id: testId, createdBy: facultyId },
+      { status: 'archived' },
+      { new: true }
+    ).select('title status');
+    if (!test) return res.status(404).json({ message: 'Test not found or unauthorized' });
+    res.status(200).json({ message: 'Archived', test });
+  } catch (error) {
+    res.status(500).json({ message: 'Error archiving test', error: error.message });
   }
 };
 
@@ -181,4 +252,20 @@ export const getTestQuestions = async (req, res) => {
     }
 };
 
-// Add more: analytics, leaderboard etc.
+export const deleteTest = async (req, res) => {
+  try {
+    const facultyId = req.user.id;
+    const { testId } = req.params;
+    const test = await Test.findOne({ _id: testId, createdBy: facultyId });
+    if (!test) return res.status(404).json({ message: 'Test not found or unauthorized' });
+    await Promise.all([
+      TestQuestion.deleteMany({ testId }),
+      UserTest.deleteMany({ testId }),
+      StudentTest.deleteMany({ testId })
+    ]);
+    await Test.deleteOne({ _id: testId });
+    res.status(200).json({ message: 'Test deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting test', error: error.message });
+  }
+};
