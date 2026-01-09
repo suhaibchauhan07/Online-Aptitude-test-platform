@@ -94,7 +94,7 @@ export const archiveTest = async (req, res) => {
 export const createTest = async (req, res) => {
     try {
         console.log('Received create test request:', req.body);
-        const { testName, description, duration, totalMarks, startTime, instructions, status } = req.body;
+        const { testName, description, duration, totalMarks, startTime, instructions, status, className, section } = req.body;
         const facultyId = req.user.id;
 
         // Validate required fields (totalMarks will be computed from uploaded questions)
@@ -103,7 +103,6 @@ export const createTest = async (req, res) => {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
-        // Create new test
         const test = new Test({
             title: testName,
             description: description || '',
@@ -112,7 +111,9 @@ export const createTest = async (req, res) => {
             startTime,
             instructions,
             createdBy: facultyId,
-            status: status === 'active' ? 'published' : (status || 'draft')
+            status: status === 'active' ? 'published' : (status || 'draft'),
+            className: className || '',
+            section: section || ''
         });
 
         const savedTest = await test.save();

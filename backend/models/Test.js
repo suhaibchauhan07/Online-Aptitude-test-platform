@@ -35,6 +35,14 @@ const testSchema = new mongoose.Schema({
         enum: ['draft', 'published', 'archived'],
         default: 'draft'
     },
+    className: { 
+        type: String, 
+        default: '' 
+    },
+    section: { 
+        type: String, 
+        default: '' 
+    },
     instructions: {
         type: String,
         default: '',

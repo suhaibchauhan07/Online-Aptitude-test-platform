@@ -516,6 +516,122 @@ export const uploadQuestions = async (req, res) => {
   }
 };
 
+export const getDashboardStats = async (req, res) => {
+  try {
+    const facultyId = req.user.id;
+    const now = new Date();
+
+    // Fetch all tests created by the faculty
+    const tests = await Test.find({ createdBy: facultyId }).lean();
+    const testIds = tests.map(t => t._id);
+
+    // Fetch student results for these tests
+    const allResults = await StudentTest.find({ testId: { $in: testIds } })
+      .select('studentId testId percentage marksObtained status updatedAt createdAt')
+      .lean();
+      
+    // Calculate stats
+    const testsCreated = tests.length;
+
+    // Active tests: status is 'published' AND current time is within window
+    const activeTestsList = tests.filter(test => {
+      if (test.status !== 'published') return false;
+      const startTime = new Date(test.startTime);
+      const durationMs = (test.duration || 60) * 60000;
+      const endTime = new Date(startTime.getTime() + durationMs);
+      return startTime <= now && now <= endTime;
+    });
+    const activeTestsCount = activeTestsList.length;
+
+    // Total students (unique count of those who attempted)
+    const uniqueStudentIds = new Set(allResults.map(r => String(r.studentId)));
+    const totalStudents = uniqueStudentIds.size;
+
+    // Average Score
+    const completedResults = allResults.filter(r => r.status === 'completed');
+    const totalScore = completedResults.reduce((sum, r) => sum + (r.percentage || 0), 0);
+    const averageScore = completedResults.length > 0 
+      ? Math.round((totalScore / completedResults.length) * 10) / 10 
+      : 0;
+
+    // Format Active Tests List
+    const activeTestsData = await Promise.all(activeTestsList.map(async (test) => {
+      const attempts = allResults.filter(r => String(r.testId) === String(test._id)).length;
+      
+      let assignedCount = 0;
+      if (test.className) {
+          assignedCount = await Student.countDocuments({ className: test.className });
+      } else {
+          assignedCount = await Student.countDocuments({});
+      }
+
+      return {
+        id: test._id,
+        title: test.title,
+        class: test.className ? `${test.className} ${test.section || ''}`.trim() : "All Sections",
+        date: new Date(test.startTime).toLocaleDateString(),
+        time: new Date(test.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        duration: `${test.duration} mins`,
+        status: 'Active',
+        studentsAttempted: attempts,
+        totalStudents: assignedCount
+      };
+    }));
+
+    // Format Recent Results List (Test Summaries)
+    // Get 5 most recent tests (by start time)
+    const recentTests = tests
+        .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+        .slice(0, 5);
+
+    const recentResultsData = await Promise.all(recentTests.map(async (test) => {
+        const testResults = allResults.filter(r => String(r.testId) === String(test._id) && r.status === 'completed');
+        
+        const attempts = testResults.length;
+        let assignedCount = 0;
+        if (test.className) {
+            assignedCount = await Student.countDocuments({ className: test.className });
+        } else {
+            assignedCount = await Student.countDocuments({});
+        }
+
+        const avgScore = attempts > 0 
+            ? Math.round(testResults.reduce((sum, r) => sum + (r.percentage || 0), 0) / attempts * 10) / 10 
+            : 0;
+        
+        const passedCount = testResults.filter(r => (r.percentage || 0) >= 40).length; // Assuming 40% pass
+        const passPercentage = attempts > 0 ? Math.round((passedCount / attempts) * 100) : 0;
+        
+        const completionRate = assignedCount > 0 ? Math.round((attempts / assignedCount) * 100) : 0;
+
+        return {
+            id: test._id,
+            testName: test.title,
+            class: test.className ? `${test.className} ${test.section || ''}`.trim() : "All Sections",
+            averageScore: avgScore,
+            passPercentage: passPercentage,
+            completionRate: completionRate,
+            date: new Date(test.startTime).toLocaleDateString()
+        };
+    }));
+
+    res.status(200).json({
+      stats: {
+        totalStudents,
+        activeTests: activeTestsCount,
+        testsCreated,
+        averageScore
+      },
+      activeTests: activeTestsData,
+      recentResults: recentResultsData
+    });
+
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({ message: 'Error fetching dashboard stats', error: error.message });
+  }
+};
+
 export const changeFacultyPassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;

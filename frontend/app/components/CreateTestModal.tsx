@@ -33,7 +33,9 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
         title: '',
         duration: '',
         startTime: '',
-        instructions: ''
+        instructions: '',
+        className: '',
+        section: ''
     })
     const [questions, setQuestions] = useState<Question[]>([])
     const [error, setError] = useState('')
@@ -145,6 +147,8 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                 duration: Number(formData.duration),
                 startTime: formData.startTime,
                 instructions: formData.instructions,
+                className: formData.className,
+                section: formData.section,
                 status: 'active'
             };
             const testResponse = await fetch(`${API_BASE_URL}/tests/create`, {
@@ -209,7 +213,9 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
             title: '',
             duration: '',
             startTime: '',
-            instructions: ''
+            instructions: '',
+            className: '',
+            section: ''
         })
         setQuestions([])
         setError('')
@@ -255,6 +261,14 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                             <div>
                                 <Label htmlFor="startTime">Start Time</Label>
                                 <Input id="startTime" type="datetime-local" value={formData.startTime} onChange={(e) => setFormData({ ...formData, startTime: e.target.value })} placeholder="Select start time" />
+                            </div>
+                            <div>
+                                <Label htmlFor="className">Class (Optional)</Label>
+                                <Input id="className" value={formData.className} onChange={(e) => setFormData(prev => ({ ...prev, className: e.target.value }))} placeholder="e.g. CS-A" />
+                            </div>
+                            <div>
+                                <Label htmlFor="section">Section (Optional)</Label>
+                                <Input id="section" value={formData.section} onChange={(e) => setFormData(prev => ({ ...prev, section: e.target.value }))} placeholder="e.g. A" />
                             </div>
                             <div className="col-span-1 sm:col-span-2">
                                 <Label htmlFor="instructions">Instructions</Label>

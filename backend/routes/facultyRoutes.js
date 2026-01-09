@@ -14,7 +14,8 @@ import {
     requestFacultyPasswordResetOtp,
     verifyFacultyPasswordResetOtp,
     resetFacultyPassword,
-    lookupFacultyRegisteredPhoneByEmail
+    lookupFacultyRegisteredPhoneByEmail,
+    getDashboardStats
 } from '../controllers/facultyController.js';
 import uploadMiddleware from '../middleware/uploadMiddleware.js';
 import { authMiddleware, requireRole } from '../middleware/authMiddleware.js';
@@ -37,6 +38,7 @@ router.post('/forgot-password/verify-otp', authSpeedLimiter, authRateLimiter, ve
 router.post('/forgot-password/reset', authSpeedLimiter, authRateLimiter, resetFacultyPassword);
 
 // Protected routes
+router.get('/dashboard-stats', authMiddleware, requireRole(['faculty']), getDashboardStats);
 router.get('/profile', authMiddleware, requireRole(['faculty']), getFacultyProfile);
 router.put('/profile', authMiddleware, requireRole(['faculty']), mutationRateLimiter, updateFacultyProfile);
 router.post('/create-class', authMiddleware, requireRole(['faculty']), mutationRateLimiter, createClass);
