@@ -14,6 +14,8 @@ interface Test {
   startTime: string
   duration: number
   totalMarks: number
+  isCompleted?: boolean
+  marksObtained?: number
 }
 
 export default function AvailableTestsPage() {
@@ -153,13 +155,15 @@ export default function AvailableTestsPage() {
                   'border-red-200 bg-red-50/30'
                 }`}>
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex-1">{test.title}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex-1 break-words">{test.title}</h2>
                     <div className={`px-3 py-1 rounded-full text-xs font-semibold ml-2 ${
+                      test.isCompleted ? 'bg-blue-100 text-blue-700' :
                       isTestAvailable ? 'bg-green-100 text-green-700' : 
                       isTestUpcoming ? 'bg-yellow-100 text-yellow-700' : 
                       'bg-red-100 text-red-700'
                     }`}>
-                      {isTestAvailable ? '🟢 Available' : 
+                      {test.isCompleted ? '🔵 Completed' :
+                       isTestAvailable ? '🟢 Available' : 
                        isTestUpcoming ? '🟡 Upcoming' : 
                        '🔴 Expired'}
                     </div>
@@ -171,7 +175,7 @@ export default function AvailableTestsPage() {
                         <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C6.753 20.5 2 16.195 2 11.5S6.753 2.5 12 2.5s10 4.305 10 9-4.753 9-10 9z" /></svg>
                         <span className="text-sm font-semibold text-blue-700">Instructions for Students</span>
                       </div>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900 shadow-md whitespace-pre-line">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900 shadow-md whitespace-pre-line break-words">
                         {test.instructions}
                       </div>
                     </div>
@@ -186,16 +190,19 @@ export default function AvailableTestsPage() {
                   
                   <button
                     onClick={() => handleStartTest(test._id)}
-                    disabled={!isTestAvailable}
+                    disabled={!isTestAvailable || test.isCompleted}
                     className={`mt-auto font-bold py-3 px-6 rounded-xl shadow-lg transition-all text-base focus:outline-none focus:ring-2 w-full ${
-                      isTestAvailable 
+                      test.isCompleted
+                        ? 'bg-gradient-to-r from-gray-400 to-gray-600 text-white cursor-not-allowed opacity-90'
+                        : isTestAvailable 
                         ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 focus:ring-blue-400' 
                         : isTestUpcoming
                         ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white cursor-not-allowed opacity-70'
                         : 'bg-gradient-to-r from-red-400 to-red-600 text-white cursor-not-allowed opacity-70'
                     }`}
                   >
-                    {isTestAvailable ? 'Start Test' : 
+                    {test.isCompleted ? 'Completed' :
+                     isTestAvailable ? 'Start Test' : 
                      isTestUpcoming ? 'Test Not Started' : 
                      'Test Expired'}
                   </button>

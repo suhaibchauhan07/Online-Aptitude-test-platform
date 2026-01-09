@@ -1,14 +1,12 @@
 "use client"
 import type React from "react"
 import { useEffect, useState } from "react"
-import { StudentLayout } from "@/components/student-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Calendar, CheckCircle, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import API_BASE_URL from "@/app/config/api"
- 
+
 
 export default function StudentDashboard() {
   const [tests, setTests] = useState<any[]>([])
@@ -52,7 +50,7 @@ export default function StudentDashboard() {
   const lastResult = recentResults[recentResults.length-1]
 
   return (
-    <StudentLayout>
+    
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white py-8 px-4 sm:px-6">
         <div className="container py-4">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-900 mb-8 drop-shadow-lg">Student Dashboard</h1>
@@ -88,9 +86,9 @@ export default function StudentDashboard() {
                 <div className="space-y-6">
                   {[...tests].sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()).slice(0, 6).map((test) => (
                     <div key={test._id || test.id} className="border border-blue-100 rounded-xl p-5 bg-gradient-to-br from-blue-50/60 to-indigo-50/40 shadow-md hover:shadow-lg hover:scale-[1.02] transition-transform">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-gray-900 text-base sm:text-lg">{test.title || test.testName}</h3>
-                        <Badge className={(Date.now() < new Date(test.startTime).getTime()) ? "bg-primary-blue" : (Date.now() <= new Date(test.startTime).getTime() + (test.duration || 0) * 60000) ? "bg-green-600" : "bg-red-500"}>{(Date.now() < new Date(test.startTime).getTime()) ? "Upcoming" : (Date.now() <= new Date(test.startTime).getTime() + (test.duration || 0) * 60000) ? "Available" : "Expired"}</Badge>
+                      <div className="flex justify-between items-start gap-3 mb-2">
+                        <h3 className="font-semibold text-gray-900 text-base sm:text-lg break-words">{test.title || test.testName}</h3>
+                        <Badge className={(Date.now() < new Date(test.startTime).getTime()) ? "bg-primary-blue shrink-0" : (Date.now() <= new Date(test.startTime).getTime() + (test.duration || 0) * 60000) ? "bg-green-600 shrink-0" : "bg-red-500 shrink-0"}>{(Date.now() < new Date(test.startTime).getTime()) ? "Upcoming" : (Date.now() <= new Date(test.startTime).getTime() + (test.duration || 0) * 60000) ? "Available" : "Expired"}</Badge>
                       </div>
                       <div className="text-sm text-gray-600 space-y-2">
                         <div className="flex items-center">
@@ -150,7 +148,7 @@ export default function StudentDashboard() {
           </div>
         </div>
       </div>
-    </StudentLayout>
+    
   )
 }
 
@@ -163,9 +161,9 @@ interface StatsCardProps {
 
 function StatsCard({ title, value, description, icon }: StatsCardProps) {
   return (
-    <Card className="group relative overflow-hidden border-0 rounded-2xl bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transform hover:scale-[1.03] transition-all duration-300">
+    <div className="group relative overflow-hidden border-0 rounded-2xl bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transform hover:scale-[1.03] transition-all duration-300">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      <CardContent className="p-5 sm:p-6 relative z-10">
+      <div className="p-5 sm:p-6 relative z-10">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-xs sm:text-sm font-medium text-gray-600">{title}</h3>
           <div className="p-2 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 text-primary-blue shadow-sm">{icon}</div>
@@ -174,7 +172,7 @@ function StatsCard({ title, value, description, icon }: StatsCardProps) {
           <p className="text-xl sm:text-2xl font-extrabold text-blue-900">{value}</p>
           <p className="text-xs sm:text-sm text-gray-500">{description}</p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

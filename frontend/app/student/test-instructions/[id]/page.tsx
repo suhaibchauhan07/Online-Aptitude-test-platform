@@ -98,6 +98,16 @@ export default function TestInstructions({ params }: { params: Promise<{ id: str
 									Once you start, the timer begins. Do not refresh or close the tab.
 								</AlertDescription>
 							</Alert>
+							<Alert variant="destructive">
+								<Ban className="h-4 w-4" />
+								<AlertTitle>Strict Exam Security</AlertTitle>
+								<AlertDescription>
+									This test requires <strong>Full Screen Mode</strong>. Exiting full screen, switching tabs, or minimizing the browser is a violation.
+									<ul className="list-disc list-inside mt-2">
+										<li><strong>Any Violation:</strong> Immediate Automatic Submission</li>
+									</ul>
+								</AlertDescription>
+							</Alert>
 							<div className="flex items-center space-x-2">
 								<Checkbox id="agree" checked={agreed} onCheckedChange={(v) => setAgreed(Boolean(v))} />
 								<label htmlFor="agree" className="text-sm">I have read and agree to the instructions</label>
@@ -105,7 +115,7 @@ export default function TestInstructions({ params }: { params: Promise<{ id: str
 						</div>
 					</CardContent>
 					<CardFooter>
-						<Button disabled={!agreed || loading} onClick={handleStartTest}>
+						<Button disabled={!agreed || loading} onClick={handleStartTest} className="w-full sm:w-auto">
 							{loading ? 'Starting...' : 'Start Test'}
 						</Button>
 					</CardFooter>

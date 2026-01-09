@@ -130,89 +130,188 @@ export default function ManageTestsPage() {
               <div>Loading...</div>
             ) : tests.length === 0 ? (
               <div className="text-gray-600">No tests yet. Click “Create Test” to add one.</div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Questions</TableHead>
-                    <TableHead>Total Marks</TableHead>
-                    <TableHead>Start</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            ) : ( 
+              <>
+                {/* Mobile View: Cards */}
+                <div className="md:hidden space-y-4">
                   {tests.map(t => (
-                    <TableRow key={t.id}>
-                      <TableCell className="font-semibold">{t.title}</TableCell>
-                      <TableCell>{t.questionCount}</TableCell>
-                      <TableCell>{t.totalMarks}</TableCell>
-                      <TableCell>{new Date(t.startTime).toLocaleString()}</TableCell>
-                      <TableCell>
+                    <div key={t.id} className="border rounded-lg p-4 space-y-3 bg-white shadow-sm">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-semibold text-lg">{t.title}</div>
+                          <div className="text-sm text-gray-500">{new Date(t.startTime).toLocaleString()}</div>
+                        </div>
                         <Badge variant={t.status === "published" ? "default" : t.status === "draft" ? "secondary" : "outline"}>
                           {t.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div className="bg-gray-50 p-2 rounded">
+                          <span className="font-medium">Questions:</span> {t.questionCount}
+                        </div>
+                        <div className="bg-gray-50 p-2 rounded">
+                          <span className="font-medium">Marks:</span> {t.totalMarks}
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex flex-col gap-2">
                         <Button
                           variant="outline"
                           size="sm"
+                          className="w-full justify-center"
                           onClick={() => { setUploadTestId(t.id); setUploadOpen(true) }}
                         >
-                          <Upload className="h-4 w-4 mr-1" />
+                          <Upload className="h-4 w-4 mr-2" />
                           Update Questions
                         </Button>
-                        {t.status !== "published" ? (
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                          {t.status !== "published" ? (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="w-full justify-center"
+                              disabled={updatingId === t.id}
+                              onClick={() => setStatus(t.id, "published")}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Publish
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="w-full justify-center"
+                              disabled={updatingId === t.id}
+                              onClick={() => setStatus(t.id, "draft")}
+                            >
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Unpublish
+                            </Button>
+                          )}
+                          
+                          <Link href={`/faculty/student-results`} className="w-full">
+                            <Button variant="ghost" size="sm" className="w-full justify-center">
+                              <Eye className="h-4 w-4 mr-2" />
+                              Results
+                            </Button>
+                          </Link>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
                           <Button
-                            variant="default"
+                            variant="ghost"
                             size="sm"
+                            className="w-full justify-center"
                             disabled={updatingId === t.id}
-                            onClick={() => setStatus(t.id, "published")}
+                            onClick={() => archive(t.id)}
                           >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Publish
+                            <Archive className="h-4 w-4 mr-2" />
+                            Archive
                           </Button>
-                        ) : (
                           <Button
-                            variant="secondary"
+                            variant="destructive"
                             size="sm"
+                            className="w-full justify-center"
                             disabled={updatingId === t.id}
-                            onClick={() => setStatus(t.id, "draft")}
+                            onClick={() => removeTest(t.id)}
                           >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Unpublish
+                            <Trash className="h-4 w-4 mr-2" />
+                            Delete
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={updatingId === t.id}
-                          onClick={() => archive(t.id)}
-                        >
-                          <Archive className="h-4 w-4 mr-1" />
-                          Archive
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          disabled={updatingId === t.id}
-                          onClick={() => removeTest(t.id)}
-                        >
-                          <Trash className="h-4 w-4 mr-1" />
-                          Delete Test
-                        </Button>
-                        <Link href={`/faculty/student-results`}>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4 mr-1" />
-                            Results
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+
+                {/* Desktop View: Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Questions</TableHead>
+                        <TableHead>Total Marks</TableHead>
+                        <TableHead>Start</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tests.map(t => (
+                        <TableRow key={t.id}>
+                          <TableCell className="font-semibold">{t.title}</TableCell>
+                          <TableCell>{t.questionCount}</TableCell>
+                          <TableCell>{t.totalMarks}</TableCell>
+                          <TableCell>{new Date(t.startTime).toLocaleString()}</TableCell>
+                          <TableCell>
+                            <Badge variant={t.status === "published" ? "default" : t.status === "draft" ? "secondary" : "outline"}>
+                              {t.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => { setUploadTestId(t.id); setUploadOpen(true) }}
+                            >
+                              <Upload className="h-4 w-4 mr-1" />
+                              Update Questions
+                            </Button>
+                            {t.status !== "published" ? (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                disabled={updatingId === t.id}
+                                onClick={() => setStatus(t.id, "published")}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Publish
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                disabled={updatingId === t.id}
+                                onClick={() => setStatus(t.id, "draft")}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Unpublish
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={updatingId === t.id}
+                              onClick={() => archive(t.id)}
+                            >
+                              <Archive className="h-4 w-4 mr-1" />
+                              Archive
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              disabled={updatingId === t.id}
+                              onClick={() => removeTest(t.id)}
+                            >
+                              <Trash className="h-4 w-4 mr-1" />
+                              Delete Test
+                            </Button>
+                            <Link href={`/faculty/student-results`}>
+                              <Button variant="ghost" size="sm">
+                                <Eye className="h-4 w-4 mr-1" />
+                                Results
+                              </Button>
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

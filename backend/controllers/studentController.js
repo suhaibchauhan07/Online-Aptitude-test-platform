@@ -498,8 +498,8 @@ export const startTest = async (req, res) => {
 
 export const submitTest = async (req, res) => {
     try {
-        const { answers } = req.body;
-        console.log('Submit test request:', { testId: req.params.testId, studentId: req.user._id, answersCount: answers?.length });
+        const { answers, isViolation } = req.body;
+        console.log('Submit test request:', { testId: req.params.testId, studentId: req.user._id, answersCount: answers?.length, isViolation });
         
         // Populate questions virtual with correct model name
         const test = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
@@ -525,23 +525,28 @@ export const submitTest = async (req, res) => {
 
                 // If no in-progress attempt exists, create one on the fly (robustness)
                 if (!studentTest) {
-                    // Guard against rapid duplicate submissions: reuse most recent completed attempt in last 5 seconds
-                    const recentCompleted = await StudentTest.findOne({
+                    // Check for any previously completed attempt
+                    const previousCompleted = await StudentTest.findOne({
                         testId: test._id,
                         studentId: req.user._id,
                         status: 'completed'
                     }).sort({ completedAt: -1 });
-                    if (recentCompleted && (Date.now() - new Date(recentCompleted.completedAt).getTime()) < 5000) {
-                        return res.status(200).json({
-                            totalMarks: recentCompleted.totalMarks,
-                            marksObtained: recentCompleted.marksObtained,
-                            percentage: recentCompleted.percentage,
-                            timeTaken: recentCompleted.timeTaken
-                        });
-                    }
-                }
 
-                if (!studentTest) {
+                    if (previousCompleted) {
+                        // Idempotency: If completed very recently (< 10 seconds), return that result
+                        if ((Date.now() - new Date(previousCompleted.completedAt).getTime()) < 10000) {
+                            return res.status(200).json({
+                                totalMarks: previousCompleted.totalMarks,
+                                marksObtained: previousCompleted.marksObtained,
+                                percentage: previousCompleted.percentage,
+                                timeTaken: previousCompleted.timeTaken
+                            });
+                        }
+                        // Otherwise, block re-submission
+                        return res.status(403).json({ message: 'You have already completed this test.' });
+                    }
+
+                    // Only create new if strictly no previous completion
                     studentTest = await StudentTest.create({
                         studentId: req.user._id,
                         testId: test._id,
@@ -570,6 +575,12 @@ export const submitTest = async (req, res) => {
                 studentTest.status = 'completed';
                 studentTest.completedAt = Date.now();
                 studentTest.timeTaken = Math.floor((studentTest.completedAt - studentTest.startedAt) / 60000);
+                
+                if (isViolation) {
+                    studentTest.isViolation = true;
+                    studentTest.marksObtained = 0;
+                    studentTest.percentage = 0;
+                }
 
                 await studentTest.save();
                 break; // Success, exit retry loop
@@ -611,7 +622,9 @@ export const getTestResult = async (req, res) => {
             testId: req.params.testId,
             studentId: req.user._id,
             status: 'completed'
-        }).populate('testId', 'title duration totalMarks startTime');
+        })
+        .sort({ completedAt: -1 })
+        .populate('testId', 'title duration totalMarks startTime');
 
         // If no completed test found, check for in_progress test
         if (!result) {
@@ -662,7 +675,7 @@ export const getTestResult = async (req, res) => {
         // Ensure answers include correctness; recompute if missing
         let answers = result.answers || [];
         const needsRecalc = answers.some(a => typeof a.isCorrect === 'undefined');
-        if (needsRecalc) {
+        if (needsRecalc && !result.isViolation) {
             const test = await Test.findById(req.params.testId).populate({ path: 'questions', model: 'TestQuestions' });
             const mapped = answers.map(a => ({ questionId: a.questionId?.toString?.() || String(a.questionId), selectedAnswer: a.selectedAnswer }));
             const score = await calculateScore(test, mapped);
@@ -691,6 +704,7 @@ export const getTestResult = async (req, res) => {
             startedAt: result.startedAt,
             completedAt: result.completedAt,
             timeTaken: result.timeTaken,
+            isViolation: result.isViolation || false,
             // Analytics
             correctCount,
             incorrectCount,

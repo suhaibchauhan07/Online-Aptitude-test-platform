@@ -7,9 +7,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Clock, AlertCircle, X, CheckCircle2, AlertTriangle, Flag, Menu } from "lucide-react"
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { Clock, AlertCircle, X, CheckCircle2, AlertTriangle, Flag, Menu, Maximize } from "lucide-react"
 import API_BASE_URL from "@/app/config/api"
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Question {
   id: string
@@ -45,6 +46,108 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
   const [isSubmitting, setIsSubmitting] = useState(false)
   const submittedRef = useRef(false)
   const [attemptId, setAttemptId] = useState<string | null>(null)
+  
+  // Security & Full Screen State
+  const [isFullScreen, setIsFullScreen] = useState(false)
+  const [violationCount, setViolationCount] = useState(0)
+
+  // 1. Enter Full Screen Helper
+  const enterFullScreen = async () => {
+    const element = document.documentElement as any;
+    try {
+      if (element.requestFullscreen) {
+        await element.requestFullscreen();
+      } else if (element.webkitRequestFullscreen) {
+        await element.webkitRequestFullscreen();
+      } else if (element.msRequestFullscreen) {
+        await element.msRequestFullscreen();
+      }
+      setIsFullScreen(true);
+    } catch (err) {
+      console.error("Error entering full screen:", err);
+      // Fallback for some browsers or if already in full screen
+      setIsFullScreen(!!document.fullscreenElement);
+    }
+  };
+
+  // 2. Violation Handler
+  const handleViolation = (reason: string) => {
+    if (submittedRef.current) return;
+
+    console.warn(`Violation detected: ${reason}`);
+    handleSubmitTest(true);
+  };
+
+  // 3. Security Event Listeners
+  useEffect(() => {
+    if (loading || !test || submittedRef.current) return;
+
+    const handleFullScreenChange = () => {
+      const isFull = !!document.fullscreenElement || 
+                     !!(document as any).webkitFullscreenElement || 
+                     !!(document as any).msFullscreenElement;
+      
+      setIsFullScreen(isFull);
+      if (!isFull && !submittedRef.current) {
+        handleViolation("Exited Full Screen");
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && !submittedRef.current) {
+        handleViolation("App switched/minimized");
+      }
+    };
+
+    const handleWindowBlur = () => {
+      if (!submittedRef.current && !document.hasFocus()) {
+         // Debounce or verify visibility to avoid false positives
+         // For strict mode, we count it.
+         handleViolation("Window lost focus");
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullScreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullScreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullScreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullScreenChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullScreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullScreenChange);
+      document.removeEventListener("mozfullscreenchange", handleFullScreenChange);
+      document.removeEventListener("MSFullscreenChange", handleFullScreenChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [loading, test]); // Re-bind if loading finishes
+
+  // 4. Back Button & Navigation Guard
+  useEffect(() => {
+    // Push initial state to trap back button
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = (event: PopStateEvent) => {
+      // Prevent going back by pushing state again
+      window.history.pushState(null, "", window.location.href);
+      
+      // If test is submitted, force redirect to results
+      if (submittedRef.current) {
+        router.replace(`/student/results/${id}`);
+      } else {
+         // Optional: Show warning or just silently block
+         console.warn("Back navigation is disabled during test.");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [id, router]);
 
   // Fetch test data
   useEffect(() => {
@@ -266,7 +369,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
-  const handleSubmitTest = async () => {
+  const handleSubmitTest = async (isViolation = false) => {
     try {
       if (isSubmitting || submittedRef.current) return
       setIsSubmitting(true)
@@ -291,7 +394,8 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             questionId,
             selectedAnswer: answer
           })),
-          timeTaken: timeTakenInMinutes
+          timeTaken: timeTakenInMinutes,
+          isViolation: isViolation
         })
       })
 
@@ -300,7 +404,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
         throw new Error(text || 'Failed to submit test')
       }
 
-      router.push(`/student/results/${id}`)
+      router.replace(`/student/results/${id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit test')
     }
@@ -434,19 +538,29 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
       `}</style>
 
       {/* Header */}
-      <header className="bg-white/95 backdrop-blur-sm border-b-2 border-gray-200 shadow-md px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
-        <div className="animate-slide-in">
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent">
+      <header className="bg-white/95 backdrop-blur-sm border-b-2 border-gray-200 shadow-md px-4 sm:px-8 py-3 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 sticky top-0 z-30">
+        <div className="animate-slide-in flex justify-between items-center w-full sm:w-auto">
+          <h1 className="text-lg sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent truncate max-w-[200px] sm:max-w-none">
             {test.title || "Aptitude Test"}
           </h1>
+          <button
+            className="lg:hidden ml-2 px-3 py-2 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95 transition-all sm:hidden"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open questions"
+          >
+            <div className="flex items-center gap-2">
+              <Menu className="h-4 w-4" />
+              <span className="text-xs font-semibold">Questions</span>
+            </div>
+          </button>
         </div>
-        <div className="flex items-center gap-3 animate-fade-in-up">
-          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl flex items-center gap-3 shadow-md border border-gray-200">
-            <Clock className="h-5 w-5 text-blue-600" />
-            <span className="text-sm sm:text-base font-semibold text-gray-800">Time left: {formatTime(timeLeft)}</span>
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 animate-fade-in-up">
+          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-3 py-2 sm:px-5 sm:py-3 rounded-xl flex items-center gap-2 sm:gap-3 shadow-md border border-gray-200 flex-1 sm:flex-none justify-center">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+            <span className="text-sm sm:text-base font-semibold text-gray-800 whitespace-nowrap">Time left: {formatTime(timeLeft)}</span>
           </div>
           <button
-            className="lg:hidden ml-2 px-3 py-2 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95 transition-all"
+            className="hidden sm:block lg:hidden ml-2 px-3 py-2 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg active:scale-95 transition-all"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open questions"
           >
@@ -556,14 +670,14 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             <div className="border-t-2 border-gray-200 pt-5 sm:pt-6 mt-6 sm:mt-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">              
                 <div className="w-full sm:w-auto flex flex-col gap-3 sm:gap-4">                 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                     <Button
-                      variant="outline"
+                      variant="outline" 
                       onClick={handlePrevQuestion}
                       disabled={currentQuestion === 0}
                       className="w-full sm:w-auto border-2 border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 sm:px-7 py-2.5 sm:py-3 text-base sm:text-lg font-medium transition-all duration-200"
                     >
-                      Previous
+                      Previous  
                     </Button>
                     <Button
                       onClick={handleNextQuestion}
@@ -573,7 +687,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
                     </Button>
                      <Button
                     variant="outline"
-                    onClick={handleSubmitTest}
+                    onClick={() => handleSubmitTest()}
                     className="w-full sm:w-auto border-green-500 text-green-700 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-900 transition-all text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                   >
                     Submit Test
@@ -634,7 +748,7 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             {/* Question Navigation */}
             <div className="mb-8">
               <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-5">Choose a question</h3>
-              <div className="grid grid-cols-6 sm:grid-cols-5 gap-2 sm:gap-3 max-h-[50vh] lg:max-h-none overflow-y-auto pr-1">
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-3 max-h-[50vh] lg:max-h-none overflow-y-auto pr-1">
                 {test.questions.map((q, index) => {
                   const status = getQuestionStatus(q.id)
                   const isCurrent = currentQuestion === index
@@ -685,6 +799,29 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
           </div>
         </aside>
       </div>
+
+      {/* Full Screen Overlay */}
+      {!isFullScreen && !loading && !error && test && !submittedRef.current && (
+        <div className="fixed inset-0 z-50 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
+          <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Maximize className="w-10 h-10 text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Full Screen Required</h2>
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              This test must be taken in full screen mode to ensure exam integrity. 
+              Exiting full screen will be recorded as a violation.
+            </p>
+            <Button 
+              onClick={enterFullScreen} 
+              size="lg" 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-6 text-lg font-semibold shadow-lg hover:shadow-blue-500/30 transition-all"
+            >
+              Enter Full Screen
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

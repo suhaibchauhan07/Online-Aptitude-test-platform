@@ -47,9 +47,25 @@ export const getAvailableTests = async (req, res) => {
       { $group: { _id: '$testId', total: { $sum: '$marks' } } }
     ]);
     const totalMap = new Map(totalsAgg.map(t => [String(t._id), Number(t.total)]));
+
+    // Get all completed attempts for this student to mark tests as completed
+    const completedAttempts = await StudentTest.find({
+      studentId: req.user._id,
+      status: 'completed'
+    }).select('testId marksObtained');
+    const completedMap = new Map(completedAttempts.map(a => [String(a.testId), a]));
+
     const enriched = tests.map(t => {
       const obj = t.toObject();
       obj.totalMarks = totalMap.get(String(t._id)) ?? obj.totalMarks;
+      
+      const attempt = completedMap.get(String(t._id));
+      if (attempt) {
+          obj.isCompleted = true;
+          obj.marksObtained = attempt.marksObtained;
+      } else {
+          obj.isCompleted = false;
+      }
       return obj;
     });
 
@@ -82,6 +98,21 @@ export const getTestDetails = async (req, res) => {
       return res.status(404).json({
         status: 'error',
         message: 'Test not found or not published'
+      });
+    }
+
+    // Check if student has already completed the test
+    const completedAttempt = await StudentTest.findOne({
+      testId: test._id,
+      studentId: req.user._id,
+      status: 'completed'
+    });
+
+    if (completedAttempt) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'You have already completed this test.',
+        redirect: `/student/results/${test._id}`
       });
     }
 
@@ -143,10 +174,25 @@ export const startTest = async (req, res) => {
 
     console.log('Test found:', test.testName || test.title);
 
+    // Check if student has already completed the test
+    const completedAttempt = await StudentTest.findOne({
+      testId: test._id,
+      studentId: req.user._id,
+      status: 'completed'
+    });
+
+    if (completedAttempt) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'You have already completed this test.'
+      });
+    }
+
     // Check if student has already started the test
     const existingAttempt = await StudentTest.findOne({
       testId: test._id,
-      studentId: req.user._id
+      studentId: req.user._id,
+      status: 'in_progress'
     });
 
     if (existingAttempt) {

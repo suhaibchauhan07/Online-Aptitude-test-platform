@@ -67,9 +67,9 @@ export default function FacultyStudentTestDetailPage(){
     <div className="container py-6 px-4 sm:px-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>{title}</span>
-            <Badge variant="outline">Marks: {marks}</Badge>
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span className="break-words">{title}</span>
+            <Badge variant="outline" className="w-fit">Marks: {marks}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

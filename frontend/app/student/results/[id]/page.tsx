@@ -1,20 +1,24 @@
 "use client";
-import { useEffect, useState } from "react";
-import { StudentLayout } from "@/components/student-layout";
+import { use, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, AlertTriangle, Clock, Trophy, Award, Star, TrendingUp, Calendar, Target, Zap, FileText, Brain, Timer, ArrowRight } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Clock, Trophy, Award, Star, TrendingUp, Calendar, Target, Zap, FileText, Brain, Timer, ArrowRight, ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import API_BASE_URL from "@/app/config/api"
+
 type Question = { id: string; type: string; correctAnswer: any; marks?: number }
 
-export default function TestResult({ params }: { params: { id: string } }) {
-	const id = params.id
+export default function TestResult({ params }: { params: Promise<{ id: string }> }) {
+	const { id } = use(params)
 	const [result, setResult] = useState<any>(null);
 	const [marksMap, setMarksMap] = useState<Map<string, number>>(new Map());
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [fallback, setFallback] = useState<any | null>(null);
+
+	// Removed the useEffect that blocked back navigation to fix the navigation flow.
 
 	useEffect(() => { 
 		const fetchResult = async () => {
@@ -23,7 +27,8 @@ export default function TestResult({ params }: { params: { id: string } }) {
 					const response= await fetch(`${API_BASE_URL}/student/tests/${id}/result`, {
 					headers: {
 						Authorization: `Bearer ${localStorage.getItem('token')}`
-					}
+					},
+                    cache: 'no-store'
 				});
 				if (!response.ok) {
 					const errorData = await response.json();
@@ -33,6 +38,10 @@ export default function TestResult({ params }: { params: { id: string } }) {
 				setResult(data);
 				try { if (data?.answers && data.answers.length > 0) localStorage.removeItem(`testAnswers:${id}`) } catch (_) {}
 				if (!data?.answers || data.answers.length === 0) {
+					// Fallback logic only if no answers from backend
+                    // If violation, we might not have answers but we should rely on backend result mainly
+                    if (data?.isViolation) return; // Don't fallback if it's a violation result
+                    
 					try {
 						const saved = localStorage.getItem(`testAnswers:${id}`)
 						if (saved) {
@@ -98,32 +107,36 @@ export default function TestResult({ params }: { params: { id: string } }) {
 
 	const getScoreData = (percentage: number) => {
 		if (percentage >= 80) return {
-			color: "from-green-400 to-emerald-500",
-			bgColor: "from-green-50 to-emerald-50",
-			icon: <Trophy className="h-6 w-6 text-green-600" />,
+			color: "text-green-600",
+			bgColor: "bg-green-50",
+            borderColor: "border-green-200",
+			icon: <Trophy className="h-8 w-8 text-green-600" />,
 			text: "Excellent!",
-			border: "border-green-200"
+            badge: "bg-green-100 text-green-700 hover:bg-green-200"
 		}
 		if (percentage >= 60) return {
-			color: "from-blue-400 to-cyan-500",
-			bgColor: "from-blue-50 to-cyan-50",
-			icon: <Award className="h-6 w-6 text-blue-600" />,
+			color: "text-blue-600",
+			bgColor: "bg-blue-50",
+            borderColor: "border-blue-200",
+			icon: <Award className="h-8 w-8 text-blue-600" />,
 			text: "Good Work!",
-			border: "border-blue-200"
+            badge: "bg-blue-100 text-blue-700 hover:bg-blue-200"
 		}
 		if (percentage >= 40) return {
-			color: "from-orange-400 to-yellow-500",
-			bgColor: "from-orange-50 to-yellow-50",
-			icon: <Star className="h-6 w-6 text-orange-600" />,
+			color: "text-orange-600",
+			bgColor: "bg-orange-50",
+            borderColor: "border-orange-200",
+			icon: <Star className="h-8 w-8 text-orange-600" />,
 			text: "Keep Improving!",
-			border: "border-orange-200"
+            badge: "bg-orange-100 text-orange-700 hover:bg-orange-200"
 		}
 		return {
-			color: "from-red-400 to-rose-500",
-			bgColor: "from-red-50 to-rose-50",
-			icon: <TrendingUp className="h-6 w-6 text-red-600" />,
+			color: "text-red-600",
+			bgColor: "bg-red-50",
+            borderColor: "border-red-200",
+			icon: <TrendingUp className="h-8 w-8 text-red-600" />,
 			text: "Practice More!",
-			border: "border-red-200"
+            badge: "bg-red-100 text-red-700 hover:bg-red-200"
 		}
 	}
 
@@ -146,404 +159,354 @@ export default function TestResult({ params }: { params: { id: string } }) {
 
 	if (loading) {
 		return (
-			<StudentLayout>
-				<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
-					<div className="container mx-auto py-12 flex items-center justify-center">
-						<div className="flex flex-col items-center space-y-4">
-							<div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 bg-gradient-to-br from-blue-100 to-indigo-100 p-4 shadow-lg shadow-blue-200/50" style={{ transform: "perspective(1000px) rotateX(10deg)" }}></div>
-							<p className="text-gray-700 font-medium text-lg drop-shadow-sm">Loading your results...</p>
-						</div>
-					</div>
+			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+				<div className="flex flex-col items-center space-y-4">
+					<div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600"></div>
+					<p className="text-gray-600 font-medium">Loading your results...</p>
 				</div>
-			</StudentLayout>
+			</div>
 		);
 	}
 
 	if (error) {
 		return (
-			<StudentLayout>
-				<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 flex items-center justify-center">
-					<div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-red-200" style={{ transform: "perspective(1000px) rotateX(2deg)", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}>
-						<AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4 animate-bounce" style={{ filter: "drop-shadow(0 4px 3px rgb(0 0 0 / 0.2))" }} />
-						<h2 className="text-xl font-bold text-red-600 mb-2" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>Error Loading Result</h2>
-						<p className="text-red-500">{error}</p>
-					</div>
-				</div>
-			</StudentLayout>
+			<div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+				<Card className="max-w-md w-full border-red-200 shadow-lg">
+                    <CardContent className="pt-6 text-center">
+						<AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+						<h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Result</h2>
+						<p className="text-gray-600 mb-6">{error}</p>
+                        <Button asChild variant="outline">
+                            <Link href="/student/results">Go Back to Results</Link>
+                        </Button>
+                    </CardContent>
+				</Card>
+			</div>
 		);
 	}
 
 	if (!result) {
 		return (
-			<StudentLayout>
-				<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 flex items-center justify-center">
-					<div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl" style={{ transform: "perspective(1000px) rotateX(2deg)", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}>
-						<div className="animate-pulse">
-							<Zap className="h-12 w-12 text-blue-500 mx-auto mb-4" style={{ filter: "drop-shadow(0 4px 3px rgb(0 0 0 / 0.2))" }} />
-							<p className="text-gray-600 font-medium" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>No results found...</p>
-						</div>
-					</div>
-				</div>
-			</StudentLayout>
+			<div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+				<Card className="max-w-md w-full shadow-lg">
+                    <CardContent className="pt-6 text-center">
+                        <Zap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">No Result Found</h2>
+                        <p className="text-gray-600 mb-6">We couldn't find the result you're looking for.</p>
+                        <Button asChild variant="outline">
+                            <Link href="/student/results">Go Back to Results</Link>
+                        </Button>
+                    </CardContent>
+				</Card>
+			</div>
 		);
 	}
 
 	const sectionScores = Array.isArray(result.sectionScores) ? result.sectionScores : [];
-	const percentage = typeof result.percentage === 'number' && result.answers?.length ? Math.round(result.percentage) : Math.round(fallback?.percentage || 0);
+    const isViolation = result?.isViolation || false;
+	const percentage = isViolation ? 0 : (typeof result.percentage === 'number' && result.answers?.length ? Math.round(result.percentage) : Math.round(fallback?.percentage || 0));
 	const totalMarks = typeof result.totalMarks === 'number' && result.answers?.length ? result.totalMarks : (fallback?.totalMarks || 0);
-	const marksObtained = typeof result.marksObtained === 'number' && result.answers?.length ? result.marksObtained : (fallback?.marksObtained || 0);
+	const marksObtained = isViolation ? 0 : (typeof result.marksObtained === 'number' && result.answers?.length ? result.marksObtained : (fallback?.marksObtained || 0));
 	const scoreData = getScoreData(percentage);
 	const analytics = getAnalyticsData(result.answers?.length ? result : (fallback || { answers: [] }));
 
 	return (
-		<StudentLayout>
-			<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
-				{/* Hero Header */}
-				<div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white" style={{ transform: "perspective(1000px) rotateX(2deg)", transformOrigin: "top" }}>
-					<div className="absolute inset-0 bg-black/10"></div>
-					<div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
-					<div className="absolute -bottom-6 left-0 right-0 h-6 bg-gradient-to-t from-transparent to-black/10"></div>
-					<div className="relative container mx-auto py-16 px-6">
-						<div className="flex items-center space-x-4 mb-4">
-							<div className="transform transition-all duration-300 hover:scale-110 hover:rotate-3" style={{ filter: "drop-shadow(0 10px 8px rgb(0 0 0 / 0.2))" }}>
-								{scoreData.icon}
+		<div className="min-h-screen bg-gray-50 pb-12 font-sans">
+            {/* Header / Nav */}
+            <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Link href="/student/results" className="text-gray-500 hover:text-gray-900 transition-colors p-2 -ml-2 rounded-full hover:bg-gray-100">
+                            <ChevronLeft className="h-5 w-5" />
+                        </Link>
+                        <h1 className="text-xl font-bold text-gray-900">Test Analysis</h1>
+                    </div>
+                    <Badge variant="outline" className="font-mono text-xs">
+                        {new Date().toLocaleDateString()}
+                    </Badge>
+                </div>
+            </div>
+
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+                
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                            {scoreData.text} 
+                            {scoreData.icon}
+                        </h2>
+                        <p className="text-gray-600 mt-1">Here is the detailed analysis of your performance.</p>
+                    </div>
+                    <div className="flex gap-3 flex-wrap">
+                         <div className="bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm flex items-center gap-2">
+                            <Target className="h-4 w-4 text-blue-500" />
+                            <span className="font-semibold text-gray-900">{marksObtained}/{totalMarks}</span>
+                            <span className="text-xs text-gray-500 uppercase font-medium">Marks</span>
+                         </div>
+                         <div className="bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm flex items-center gap-2">
+                            <Brain className="h-4 w-4 text-purple-500" />
+                            <span className="font-semibold text-gray-900">{percentage}%</span>
+                            <span className="text-xs text-gray-500 uppercase font-medium">Score</span>
+                         </div>
+                    </div>
+                </div>
+
+                {/* Violation Alert */}
+                {result.isViolation && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4">
+                        <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0" />
+                        <div>
+                            <h3 className="text-lg font-bold text-red-900">Test Violation Detected</h3>
+                            <p className="text-red-700 mt-1">You violated the test rules, therefore your test was automatically submitted.</p>
+                        </div>
+                    </div>
+                )}
+
+				{/* Stats Grid */}
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+					{/* Overall Score Card */}
+					<Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden ring-1 ring-gray-200">
+						<div className={`h-1 w-full ${scoreData.bgColor.replace('bg-', 'bg-gradient-to-r from-').replace('50', '400')} to-gray-400`}></div>
+						<CardContent className="p-6">
+							<div className="flex justify-between items-start mb-4">
+								<div className="p-2 bg-blue-50 rounded-lg">
+                                    <Trophy className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <Badge className={scoreData.badge}>{percentage}%</Badge>
 							</div>
-							<h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent" style={{ textShadow: "0 4px 6px rgba(0, 0, 0, 0.1)" }}>
-								Test Result Analysis
-							</h1>
-						</div>
-						<p className="text-xl text-blue-100 font-medium" style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.1)" }}>
-							{scoreData.text}
-						</p>
-						<div className="mt-6 flex items-center space-x-6 text-blue-100">
-                            <div className="flex items-center space-x-2 transform transition-all duration-300 hover:scale-105 hover:translate-y-[-2px]">
-                                <CheckCircle className="h-5 w-5" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
-                                <span className="font-medium" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)" }}>Marks: {marksObtained}/{totalMarks}</span>
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium text-gray-500">Overall Score</p>
+                                <h3 className="text-2xl font-bold text-gray-900">{marksObtained}/{totalMarks}</h3>
                             </div>
-							<div className="flex items-center space-x-2 transform transition-all duration-300 hover:scale-105 hover:translate-y-[-2px]">
-								<Target className="h-5 w-5" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
-								<span className="font-medium" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)" }}>{marksObtained}/{totalMarks} marks</span>
+                            <Progress value={percentage} className="mt-4 h-1.5" />
+						</CardContent>
+					</Card>
+
+					{/* Correct Answers Card */}
+					<Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden ring-1 ring-gray-200">
+                        <div className="h-1 w-full bg-gradient-to-r from-green-400 to-emerald-500"></div>
+						<CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+								<div className="p-2 bg-green-50 rounded-lg">
+                                    <CheckCircle className="h-6 w-6 text-green-600" />
+                                </div>
+                                <Badge variant="secondary" className="bg-green-100 text-green-700">Correct</Badge>
 							</div>
-                            <div className="flex items-center space-x-2 transform transition-all duration-300 hover:scale-105 hover:translate-y-[-2px]">
-                                <Brain className="h-5 w-5" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
-                                <span className="font-medium" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)" }}>Correct: {analytics.correctCount}/{analytics.totalQuestions}</span>
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium text-gray-500">Correct Answers</p>
+                                <h3 className="text-2xl font-bold text-gray-900">{analytics.correctCount} <span className="text-sm text-gray-400 font-normal">/ {analytics.totalQuestions}</span></h3>
                             </div>
-						</div>
-					</div>
+                            <Progress value={analytics.accuracyRate} className="mt-4 h-1.5 bg-green-100 [&>div]:bg-green-500" />
+						</CardContent>
+					</Card>
+
+					{/* Incorrect Answers Card */}
+					<Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden ring-1 ring-gray-200">
+                        <div className="h-1 w-full bg-gradient-to-r from-red-400 to-rose-500"></div>
+						<CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+								<div className="p-2 bg-red-50 rounded-lg">
+                                    <XCircle className="h-6 w-6 text-red-600" />
+                                </div>
+                                <Badge variant="secondary" className="bg-red-100 text-red-700">Incorrect</Badge>
+							</div>
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium text-gray-500">Incorrect Answers</p>
+                                <h3 className="text-2xl font-bold text-gray-900">{analytics.incorrectCount} <span className="text-sm text-gray-400 font-normal">/ {analytics.totalQuestions}</span></h3>
+                            </div>
+                            <Progress value={(analytics.incorrectCount / analytics.totalQuestions) * 100} className="mt-4 h-1.5 bg-red-100 [&>div]:bg-red-500" />
+						</CardContent>
+					</Card>
+
+					{/* Time Performance Card */}
+					<Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden ring-1 ring-gray-200">
+                        <div className="h-1 w-full bg-gradient-to-r from-orange-400 to-yellow-500"></div>
+						<CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+								<div className="p-2 bg-orange-50 rounded-lg">
+                                    <Timer className="h-6 w-6 text-orange-600" />
+                                </div>
+                                <Badge variant="secondary" className="bg-orange-100 text-orange-700">Time</Badge>
+							</div>
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium text-gray-500">Time Taken</p>
+                                <h3 className="text-2xl font-bold text-gray-900">{result.timeTaken || 0}m</h3>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-4 font-medium">
+                                {Math.round(analytics.avgTimePerQuestion * 60)}s per question avg
+                            </p>
+						</CardContent>
+					</Card>
 				</div>
 
-				{/* Main Results Sections */}
-				<div className="container mx-auto py-12 px-6 space-y-8">
-					{/* Performance Overview Cards */}
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-						{/* Overall Score Card */}
-						<Card className={`group relative overflow-hidden border-0 shadow-xl transform hover:scale-105 transition-all duration-500 hover:-translate-y-2 bg-white/80 backdrop-blur-sm ${scoreData.border}`} style={{ transform: "perspective(1000px) rotateY(2deg)", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}>
-							<div className={`absolute inset-0 bg-gradient-to-br ${scoreData.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
-							<CardContent className="p-6 relative z-10">
-								<div className="flex items-center justify-between">
-									<div>
-										<div className="flex items-center space-x-2 mb-2">
-											<Trophy className="h-5 w-5 text-blue-600 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
-											<span className="text-sm font-medium text-gray-600">Overall Score</span>
-										</div>
-                                        <div className="text-3xl font-bold text-gray-800" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>{marksObtained}/{totalMarks} marks</div>
-									</div>
-									<div className={`px-3 py-1 rounded-full ${scoreData.color} bg-gradient-to-r text-white text-sm font-bold transform transition-all duration-300 group-hover:scale-105`} style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}>
-										{marksObtained}/{totalMarks}
-									</div>
-								</div>
-                                <Progress value={percentage} className="mt-4 h-2" />
-							</CardContent>
-						</Card>
+				{/* Detailed Question Analysis */}
+				{result.answers && result.answers.length > 0 && (
+					<div className="space-y-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <FileText className="h-6 w-6 text-gray-400" />
+                            <h2 className="text-2xl font-bold text-gray-900">Question Analysis</h2>
+                        </div>
+						
+                        <div className="grid grid-cols-1 gap-6">
+                            {result.answers.map((answer: any, index: number) => {
+                                const questionNumber = index + 1;
+                                const isCorrect = answer.isCorrect;
+                                const userAnswer = answer.selectedAnswer;
+                                const totalMarksForThis = Number(answer.questionMarks ?? marksMap.get(String(answer.questionId)) ?? 0);
+                                const marksForThis = answer.marksObtained || 0;
+                                
+                                return (
+                                    <Card 
+                                        key={answer.questionId || index}
+                                        className={`border-0 shadow-sm ring-1 ring-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md ${
+                                            isCorrect ? 'bg-white' : 'bg-white'
+                                        }`}
+                                    >
+                                        <div className={`h-full w-1 absolute left-0 top-0 bottom-0 ${isCorrect ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                        <CardContent className="p-6 pl-8 relative">
+                                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+                                                <div className="flex items-start gap-4">
+                                                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${
+                                                        isCorrect ? 'bg-green-500' : 'bg-red-500'
+                                                    }`}>
+                                                        {questionNumber}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-lg font-bold text-gray-900">Question {questionNumber}</h4>
+                                                        <p className="text-sm text-gray-500 font-medium">Marks: {totalMarksForThis}</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex items-center gap-2">
+                                                    {isCorrect ? (
+                                                        <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-0 px-3 py-1">
+                                                            <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                                                            Correct
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-0 px-3 py-1">
+                                                            <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                                                            Incorrect
+                                                        </Badge>
+                                                    )}
+                                                    <Badge variant="outline" className="font-mono">
+                                                        +{marksForThis}
+                                                    </Badge>
+                                                </div>
+                                            </div>
 
-						{/* Correct Answers Card */}
-						<Card className="group relative overflow-hidden border-0 shadow-xl transform hover:scale-105 transition-all duration-500 hover:-translate-y-2 bg-white/80 backdrop-blur-sm border-green-200" style={{ transform: "perspective(1000px) rotateY(-2deg)", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}>
-							<div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-							<CardContent className="p-6 relative z-10">
-								<div className="flex items-center justify-between">
-									<div>
-										<div className="flex items-center space-x-2 mb-2">
-											<CheckCircle className="h-5 w-5 text-green-600 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
-											<span className="text-sm font-medium text-gray-600">Correct Answers</span>
-										</div>
-										<div className="text-3xl font-bold text-gray-800" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>{analytics.correctCount}</div>
-									</div>
-                                    <div className="px-3 py-1 rounded-full bg-green-500 text-white text-sm font-bold transform transition-all duration-300 group-hover:scale-105" style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}>
-                                        {analytics.correctCount}/{analytics.totalQuestions}
-                                    </div>
-								</div>
-								<Progress value={analytics.accuracyRate} className="mt-4 h-2" />
-							</CardContent>
-						</Card>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+                                                <div className="space-y-2">
+                                                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                                                        Your Answer
+                                                    </span>
+                                                    <div className={`p-3 rounded-lg font-medium text-sm border ${
+                                                        isCorrect 
+                                                            ? 'bg-green-50 text-green-900 border-green-200' 
+                                                            : 'bg-red-50 text-red-900 border-red-200'
+                                                    }`}>
+                                                        {userAnswer || <span className="text-gray-400 italic">No answer provided</span>}
+                                                    </div>
+                                                </div>
 
-						{/* Incorrect Answers Card */}
-						<Card className="group relative overflow-hidden border-0 shadow-xl transform hover:scale-105 transition-all duration-500 hover:-translate-y-2 bg-white/80 backdrop-blur-sm border-red-200" style={{ transform: "perspective(1000px) rotateY(2deg)", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}>
-							<div className="absolute inset-0 bg-gradient-to-br from-red-50 to-rose-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-							<CardContent className="p-6 relative z-10">
-								<div className="flex items-center justify-between">
-									<div>
-										<div className="flex items-center space-x-2 mb-2">
-											<XCircle className="h-5 w-5 text-red-600 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
-											<span className="text-sm font-medium text-gray-600">Incorrect Answers</span>
-										</div>
-										<div className="text-3xl font-bold text-gray-800" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>{analytics.incorrectCount}</div>
-									</div>
-									<div className="px-3 py-1 rounded-full bg-red-500 text-white text-sm font-bold transform transition-all duration-300 group-hover:scale-105" style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}>
-										Need Practice
-									</div>
-								</div>
-								<Progress value={(analytics.incorrectCount / analytics.totalQuestions) * 100} className="mt-4 h-2" />
-							</CardContent>
-						</Card>
-
-						{/* Time Performance Card */}
-						<Card className="group relative overflow-hidden border-0 shadow-xl transform hover:scale-105 transition-all duration-500 hover:-translate-y-2 bg-white/80 backdrop-blur-sm border-indigo-200" style={{ transform: "perspective(1000px) rotateY(-2deg)", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}>
-							<div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-							<CardContent className="p-6 relative z-10">
-								<div className="flex items-center justify-between">
-									<div>
-										<div className="flex items-center space-x-2 mb-2">
-											<Timer className="h-5 w-5 text-indigo-600 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / 0.2))" }} />
-											<span className="text-sm font-medium text-gray-600">Time Taken</span>
-										</div>
-										<div className="text-3xl font-bold text-gray-800" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>{result.timeTaken || 0}m</div>
-									</div>
-									<div className="px-3 py-1 rounded-full bg-indigo-500 text-white text-sm font-bold transform transition-all duration-300 group-hover:scale-105" style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}>
-										{Math.round(analytics.avgTimePerQuestion * 60)}s avg
-									</div>
-								</div>
-								<div className="mt-4 text-sm text-gray-600">
-									{Math.round(analytics.avgTimePerQuestion)} minutes per question
-								</div>
-							</CardContent>
-						</Card>
+                                                <div className="space-y-2">
+                                                     <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                                                        Result
+                                                    </span>
+                                                    <div className="flex items-center gap-2 p-3">
+                                                        {isCorrect ? (
+                                                            <span className="text-sm font-medium text-green-700">Excellent! You got this right.</span>
+                                                        ) : (
+                                                            <span className="text-sm font-medium text-red-700">Review this topic to improve.</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
 					</div>
+				)}
 
-					{/* Detailed Question Analysis */}
-					{result.answers && result.answers.length > 0 && (
-						<Card className="group relative overflow-hidden border-0 shadow-2xl bg-white/80 backdrop-blur-sm" style={{ transform: "perspective(1000px) rotateX(1deg)", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}>
-							<CardHeader className="relative z-10">
-								<CardTitle className="text-3xl font-bold text-gray-800 flex items-center space-x-3">
-									<FileText className="h-8 w-8 text-blue-600 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" style={{ filter: "drop-shadow(0 4px 3px rgb(0 0 0 / 0.2))" }} />
-									<span style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.05)" }}>Question-by-Question Analysis</span>
-								</CardTitle>
-								<CardDescription className="text-lg" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>
-									Detailed breakdown of your answers, showing correct answers and areas for improvement
-								</CardDescription>
-					</CardHeader>
-							<CardContent className="space-y-6 relative z-10">
-								{result.answers.map((answer: any, index: number) => {
-									// For now, we'll use the answer data as available
-									// In a complete implementation, you'd fetch question details
-									const questionNumber = index + 1;
-									const isCorrect = answer.isCorrect;
-							const userAnswer = answer.selectedAnswer;
-							const totalMarksForThis = Number(answer.questionMarks ?? marksMap.get(String(answer.questionId)) ?? 0);
-							const marksForThis = answer.marksObtained || 0;
-									
-									return (
-										<div 
-											key={answer.questionId || index}
-											className={`group/question transform hover:scale-102 transition-all duration-300 p-6 rounded-2xl border-2 backdrop-blur-sm ${
-												isCorrect 
-													? 'border-green-200 bg-gradient-to-br from-green-50/50 to-emerald-50/50 hover:shadow-green-200' 
-													: 'border-red-200 bg-gradient-to-br from-red-50/50 to-rose-50/50 hover:shadow-red-200'
-											} shadow-lg hover:shadow-xl`}
-											style={{ 
-												transform: isCorrect ? "perspective(1000px) rotateY(0.5deg)" : "perspective(1000px) rotateY(-0.5deg)",
-												boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
-											}}
-										>
-											<div className="flex items-start justify-between mb-4">
-												<div className="flex items-center space-x-3">
-													<div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white transform transition-all duration-300 group-hover/question:scale-110 ${
-														isCorrect ? 'bg-green-500' : 'bg-red-500'
-													}`} style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}>
-														{questionNumber}
-													</div>
-							<div>
-								<h4 className="font-bold text-gray-800" style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.05)" }}>Question {questionNumber} ({totalMarksForThis} marks)</h4>
-								<p className="text-sm text-gray-600">Marks: {totalMarksForThis}</p>
-													</div>
-												</div>
-												
-												<div className="flex items-center space-x-2">
-													{isCorrect ? (
-														<div className="flex items-center space-x-1 text-green-600">
-															<CheckCircle className="h-5 w-5" />
-															<span className="font-bold">Correct</span>
-														</div>
-													) : (
-														<div className="flex items-center space-x-1 text-red-600">
-															<XCircle className="h-5 w-5" />
-															<span className="font-bold">Incorrect</span>
-														</div>
-													)}
-										<Badge variant={isCorrect ? "default" : "destructive"} className="font-bold transform transition-all duration-300 group-hover/question:scale-105">
-											{totalMarksForThis} marks
-										</Badge>
-												</div>
-											</div>
-
-											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-												<div className="space-y-2">
-													<div className="flex items-center space-x-2 text-green-700">
-														<CheckCircle className="h-4 w-4" />
-														<span className="font-medium">Your Answer:</span>
-													</div>
-													<div className={`p-3 rounded-lg font-medium ${
-														isCorrect 
-															? 'bg-green-100 text-green-800 border border-green-300' 
-															: 'bg-red-100 text-red-800 border border-red-300'
-													}`}>
-														{userAnswer || 'No answer provided'}
-													</div>
-												</div>
-
-												<div className="space-y-2">
-													<div className="flex items-center space-x-2 text-blue-700">
-														<Target className="h-4 w-4" />
-														<span className="font-medium">Status:</span>
-													</div>
-													<div className={`p-3 rounded-lg font-bold text-center ${
-														isCorrect 
-															? 'bg-green-100 text-green-900 border border-green-300' 
-															: 'bg-red-100 text-red-900 border border-red-300'
-													}`}>
-														{isCorrect ? '✅ Correct Answer' : '❌ Incorrect Answer'}
-													</div>
-								</div>
-							</div>
-
-											{/* Performance indicator */}
-											<div className="mt-4 flex items-center space-x-2">
-												<ArrowRight className="h-4 w-4 text-gray-500" />
-												<span className="text-sm text-gray-600">
-													{isCorrect 
-														? `Well done! You earned ${marksForThis} marks.` 
-														: `Better luck next time. Focus on this topic for improvement.`
-													}
-												</span>
-											</div>
-										</div>
-									);
-								})}
-							</CardContent>
-						</Card>
-					)}
-
-					{/* Section Performance - if available */}
-					{sectionScores.length > 0 && (
-						<Card className="group relative overflow-hidden border-0 shadow-2xl bg-white/80 backdrop-blur-sm border-blue-200">
-							<CardHeader className="relative z-10">
-								<CardTitle className="text-2xl font-bold text-gray-800 flex items-center space-x-3">
-									<Target className="h-6 w-6 text-blue-600" />
-									<span>Section Performance</span>
-								</CardTitle>
-								<CardDescription className="text-lg">Performance breakdown by test sections</CardDescription>
-							</CardHeader>
-							<CardContent className="space-y-6 relative z-10">
-									{sectionScores.map((section: any, index: number) => (
-									<div key={index} className="group/section transform hover:scale-105 transition-all duration-300 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
-										<div className="flex justify-between items-center mb-2">
-											<span className="font-bold text-gray-700 flex items-center space-x-2">
-												<div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full"></div>
-												<span>{section.name}</span>
-											</span>
-                                            <span className="text-sm font-bold text-blue-600">
-                                                    {Math.round(((section.score || 0) * (section.total || 0)) / 100)}/{section.total || 0}
-                                                </span>
-											</div>
-										<div className="h-3 bg-gray-300 rounded-full overflow-hidden shadow-inner group-hover/section:shadow-lg transition-shadow duration-300">
-											<div 
-												className={`h-full rounded-full bg-gradient-to-r ${
-													(section.score || 0) >= 80 ? 'from-green-400 to-emerald-500' :
-													(section.score || 0) >= 60 ? 'from-blue-400 to-cyan-500' :
-													(section.score || 0) >= 40 ? 'from-orange-400 to-yellow-500' :
-													'from-red-400 to-rose-500'
-												} transition-all duration-1000 ease-out`}
-												style={{ 
-													width: `${section.score || 0}%`,
-													animationDelay: `${index * 200}ms`
-												}}
-											></div>
-										</div>
-										</div>
-									))}
-							</CardContent>
-						</Card>
-					)}
-
-					{/* Summary & Insights Card */}
-					<Card className="group relative overflow-hidden border-0 shadow-2xl transform hover:scale-[1.02] transition-all duration-500 bg-white/80 backdrop-blur-sm border-purple-200">
-						<div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-						<CardHeader className="relative z-10">
-							<CardTitle className="text-2xl font-bold text-gray-800 flex items-center space-x-3">
-								<Brain className="h-6 w-6 text-purple-600" />
-								<span>Performance Summary & Insights</span>
+				{/* Section Performance */}
+				{sectionScores.length > 0 && (
+					<Card className="border-0 shadow-sm ring-1 ring-gray-200">
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<Target className="h-5 w-5 text-blue-600" />
+								Section Performance
 							</CardTitle>
+							<CardDescription>Breakdown by test sections</CardDescription>
 						</CardHeader>
-						<CardContent className="relative z-10 space-y-6">
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-								<div className="text-center p-4 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200">
-                                    <div className="text-2xl font-bold text-blue-600 mb-2">{analytics.correctCount}/{analytics.totalQuestions}</div>
-                                    <div className="text-sm text-blue-700 font-medium">Correct Answers</div>
-									<div className="text-xs text-blue-600 mt-1">
-                                        {percentage >= 80 ? 'Excellent!' : 
-                                         percentage >= 60 ? 'Good work!' : 
-                                         percentage >= 40 ? 'Keep practicing!' : 'Needs improvement!'}
-									</div>
-								</div>
+						<CardContent className="grid gap-6">
+                            {sectionScores.map((section: any, index: number) => (
+                                <div key={index} className="space-y-2">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="font-medium text-gray-700">{section.name}</span>
+                                        <span className="font-bold text-gray-900">
+                                            {Math.round(((section.score || 0) * (section.total || 0)) / 100)}/{section.total || 0}
+                                        </span>
+                                    </div>
+                                    <Progress 
+                                        value={section.score || 0} 
+                                        className="h-2.5" 
+                                        indicatorClassName={
+                                            (section.score || 0) >= 80 ? 'bg-green-500' :
+                                            (section.score || 0) >= 60 ? 'bg-blue-500' :
+                                            (section.score || 0) >= 40 ? 'bg-yellow-500' :
+                                            'bg-red-500'
+                                        }
+                                    />
+                                </div>
+                            ))}
+						</CardContent>
+					</Card>
+				)}
 
-								<div className="text-center p-4 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
-									<div className="text-2xl font-bold text-green-600 mb-2">{analytics.correctCount}</div>
-									<div className="text-sm text-green-700 font-medium">Questions Correct</div>
-									<div className="text-xs text-green-600 mt-1">Out of {analytics.totalQuestions} total</div>
-								</div>
-
-								<div className="text-center p-4 rounded-xl bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200">
-									<div className="text-2xl font-bold text-orange-600 mb-2">{result.timeTaken || 0}m</div>
-									<div className="text-sm text-orange-700 font-medium">Time Taken</div>
-									<div className="text-xs text-orange-600 mt-1">
-										{Math.round(analytics.avgTimePerQuestion)}m per question
-									</div>
-								</div>
+				{/* Summary & Insights Card */}
+				<Card className="border-0 shadow-sm ring-1 ring-gray-200 bg-gradient-to-br from-white to-gray-50/50">
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2">
+							<Brain className="h-5 w-5 text-purple-600" />
+							Performance Summary
+						</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-6">
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+							<div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 text-center">
+                                <div className="text-2xl font-bold text-blue-700">{analytics.correctCount}/{analytics.totalQuestions}</div>
+                                <div className="text-xs font-medium text-blue-600 uppercase tracking-wide mt-1">Accuracy</div>
 							</div>
 
-							{result.completedAt && (
-								<div className="p-6 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200">
-									<div className="flex items-center justify-center space-x-6 text-gray-600">
-										<div className="flex items-center space-x-2">
-											<Calendar className="h-5 w-5 text-blue-500" />
-											<span className="font-medium">
-												Completed: {new Date(result.completedAt).toLocaleDateString()}
-											</span>
-										</div>
-										<div className="flex items-center space-x-2">
-											<Clock className="h-5 w-5 text-blue-500" />
-											<span className="font-medium">
-												Time: {new Date(result.completedAt).toLocaleTimeString()}
-											</span>
-								</div>
+							<div className="p-4 rounded-xl bg-green-50/50 border border-green-100 text-center">
+								<div className="text-2xl font-bold text-green-700">{analytics.correctCount}</div>
+								<div className="text-xs font-medium text-green-600 uppercase tracking-wide mt-1">Correct Questions</div>
+							</div>
+
+							<div className="p-4 rounded-xl bg-orange-50/50 border border-orange-100 text-center">
+								<div className="text-2xl font-bold text-orange-700">{result.timeTaken || 0}m</div>
+								<div className="text-xs font-medium text-orange-600 uppercase tracking-wide mt-1">Total Time</div>
 							</div>
 						</div>
-							)}
+
+						{result.completedAt && (
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-gray-500 pt-4 border-t border-gray-100">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4" />
+                                    <span>Completed: {new Date(result.completedAt).toLocaleDateString()}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4" />
+                                    <span>Time: {new Date(result.completedAt).toLocaleTimeString()}</span>
+                                </div>
+                            </div>
+						)}
 					</CardContent>
 				</Card>
-				</div>
-
-				{/* CSS Animations */}
-				<style jsx>{`
-					@keyframes slideInWidth {
-						from {
-							width: 0%;
-						}
-						to {
-							width: 100%;
-						}
-					}
-				`}</style>
 			</div>
-		</StudentLayout>
+		</div>
 	);
 }

@@ -118,14 +118,14 @@ export default function FacultyDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Active Tests */}
         <Card className="bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-transform duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 gap-4 sm:gap-0">
             <div>
               <CardTitle className="text-lg sm:text-xl">Active Tests</CardTitle>
               <CardDescription className="text-sm">Currently active and scheduled tests</CardDescription>
             </div>
             <Button
               size="sm"
-              className="bg-primary-blue hover:bg-blue-700"
+              className="w-full sm:w-auto bg-primary-blue hover:bg-blue-700"
               onClick={() => setIsCreateTestModalOpen(true)}
             >
               Create Test
@@ -162,9 +162,9 @@ export default function FacultyDashboard() {
                           {test.studentsAttempted}/{test.totalStudents}
                         </span>
                       </div>
-                      <div className="w-full bg-gradient-to-r from-blue-400 to-blue-700 h-2.5 rounded-full shadow-lg transition-all duration-1000">
+                      <div className="w-full bg-blue-100 h-2.5 rounded-full overflow-hidden">
                         <div
-                          className="bg-primary-blue h-2.5 rounded-full"
+                          className="bg-primary-blue h-full rounded-full transition-all duration-1000"
                           style={{ width: `${(test.studentsAttempted / test.totalStudents) * 100}%` }}
                         ></div>
                       </div>
@@ -188,12 +188,12 @@ export default function FacultyDashboard() {
 
         {/* Recent Results */}
         <Card className="bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-transform duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 gap-4 sm:gap-0">
             <div>
               <CardTitle className="text-lg sm:text-xl">Recent Results</CardTitle>
               <CardDescription className="text-sm">Performance in recent tests</CardDescription>
             </div>
-            <Button asChild size="sm" variant="outline">
+            <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
               <Link href="/faculty/results">View All</Link>
             </Button>
           </CardHeader>
@@ -203,8 +203,8 @@ export default function FacultyDashboard() {
                 {recentResults.map((result) => (
                   <div key={result.id} className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-5 hover:scale-[1.03] hover:shadow-blue-200 transition-all duration-300">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium text-base sm:text-lg">{result.title}</h3>
-                      <span className="text-sm text-gray-500">{result.date}</span>
+                      <h3 className="font-medium text-base sm:text-lg break-words pr-2">{result.title}</h3>
+                      <span className="text-sm text-gray-500 shrink-0">{result.date}</span>
                     </div>
                     <p className="text-sm text-gray-500 mb-3">{result.class}</p>
                     <div className="grid grid-cols-2 gap-4 mb-3">

@@ -7,10 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-
-function QuestionUpload({ testId }: { testId: string }) {
-    return <div>Upload questions for test: {testId}</div>;
-}
+import QuestionUpload from '@/app/components/QuestionUpload'
 
 export default function CreateTest() {
     const router = useRouter()

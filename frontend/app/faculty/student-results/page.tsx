@@ -74,11 +74,11 @@ export default function FacultyStudentResultsPage() {
             return (
               <Card key={sid} className="bg-white/80 backdrop-blur-md shadow-xl">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold flex justify-between items-center">
-                    <span className="truncate">{name} ({roll})</span>
-                    <Badge variant="outline" className="font-bold">Marks: {latestMarks}</Badge>
+                  <CardTitle className="text-lg font-semibold flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <span className="break-words">{name} ({roll})</span>
+                    <Badge variant="outline" className="font-bold shrink-0">Marks: {latestMarks}</Badge>
                   </CardTitle>
-                  <CardDescription className="text-sm text-gray-600">{className}{section!=="-"?` - ${section}`:''}</CardDescription>
+                  <CardDescription className="text-sm text-gray-600 break-words">{className}{section!=="-"?` - ${section}`:''}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="text-sm font-semibold text-gray-700">Tests Given</div>
@@ -95,11 +95,11 @@ export default function FacultyStudentResultsPage() {
                             <div className="text-xs text-gray-600">Marks: {marks}</div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 text-gray-600">
+                            <div className="flex items-center gap-1 text-gray-600 shrink-0">
                               <Calendar className="h-4 w-4" />
                               <span className="text-xs">{dateStr}</span>
                             </div>
-                            <Link href={`/faculty/student-results/${sid}/${testId}`} className="text-blue-700 text-xs font-medium">View Detail</Link>
+                            <Link href={`/faculty/student-results/${sid}/${testId}`} className="text-blue-700 text-xs font-medium px-2 py-1 rounded hover:bg-blue-50">View Detail</Link>
                           </div>
                         </div>
                       )

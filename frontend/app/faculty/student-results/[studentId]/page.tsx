@@ -65,9 +65,9 @@ export default function FacultyStudentResultListPage() {
             return (
               <Card key={r._id}>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{title}</span>
-                    <Badge variant="outline">Marks: {marks}</Badge>
+                  <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <span className="break-words">{title}</span>
+                    <Badge variant="outline" className="shrink-0">Marks: {marks}</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">

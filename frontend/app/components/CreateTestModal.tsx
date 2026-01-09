@@ -243,22 +243,22 @@ export default function CreateTestModal({ isOpen, onClose, onTestCreated }: Crea
                 {step === 0 && (
                   <Card className="p-6 mb-4">
                         <h3 className="text-lg font-semibold mb-4">Test Details</h3>
-                <div className="space-y-4 grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="title">Title</Label>
-                        <Input id="title" value={formData.title} onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))} placeholder="Enter test title" />
+                                <Input id="title" value={formData.title} onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))} placeholder="Enter test title" />
                             </div>
                             <div>
                                 <Label htmlFor="duration">Duration (minutes)</Label>
-                        <Input id="duration" type="number" value={formData.duration} onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))} placeholder="Enter duration" />
+                                <Input id="duration" type="number" value={formData.duration} onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))} placeholder="Enter duration" />
                             </div>
-                      <div>
-                        <Label htmlFor="startTime">Start Time</Label>
-                        <Input id="startTime" type="datetime-local" value={formData.startTime} onChange={(e) => setFormData({ ...formData, startTime: e.target.value })} placeholder="Select start time" />
-                      </div>
-                      <div className="col-span-2">
-                        <Label htmlFor="instructions">Instructions</Label>
-                        <Input id="instructions" value={formData.instructions} onChange={(e) => setFormData(prev => ({ ...prev, instructions: e.target.value }))} placeholder="Enter test instructions" />
+                            <div>
+                                <Label htmlFor="startTime">Start Time</Label>
+                                <Input id="startTime" type="datetime-local" value={formData.startTime} onChange={(e) => setFormData({ ...formData, startTime: e.target.value })} placeholder="Select start time" />
+                            </div>
+                            <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="instructions">Instructions</Label>
+                                <Input id="instructions" value={formData.instructions} onChange={(e) => setFormData(prev => ({ ...prev, instructions: e.target.value }))} placeholder="Enter test instructions" />
                             </div>
                         </div>
                     </Card>

@@ -161,6 +161,7 @@ export default function StudentProfilePage() {
       <TiltCard
         className="relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl p-8 flex flex-col md:flex-row items-center gap-8 mb-10"
         onMouseMove={(e: React.MouseEvent<HTMLDivElement>) => {
+          if (window.innerWidth < 768) return;
           const rect = e.currentTarget.getBoundingClientRect()
           const x = (e.clientX - rect.left) / rect.width - 0.5
           const y = (e.clientY - rect.top) / rect.height - 0.5
@@ -174,11 +175,11 @@ export default function StudentProfilePage() {
         <div className="relative">
           <Avatar className="h-28 w-28 ring-4 ring-white/70 shadow-xl">
             <AvatarImage src={"/placeholder.svg?height=112&width=112"} alt="Student" />
-            <AvatarFallback className="text-3xl">{initial}</AvatarFallback>
+            <AvatarFallback className="text-2xl sm:text-3xl">{initial}</AvatarFallback>
           </Avatar>
         </div>
         <div className="flex-1 text-center md:text-left">
-          <div className="text-3xl font-extrabold tracking-tight mb-1 text-gray-900">{profile?.name}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1 text-gray-900">{profile?.name}</div>
           <div className="text-lg text-gray-600 font-medium">{profile?.rollNo}</div>
           {profile?.department && <div className="text-gray-500">{profile.department}</div>}
         </div>

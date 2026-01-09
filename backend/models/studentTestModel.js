@@ -55,6 +55,10 @@ const studentTestSchema = new mongoose.Schema({
   },
   timeTaken: {
     type: Number // in minutes
+  },
+  isViolation: {
+    type: Boolean,
+    default: false
   }
 });
 

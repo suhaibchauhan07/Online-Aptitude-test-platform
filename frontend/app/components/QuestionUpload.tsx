@@ -104,8 +104,8 @@ export default function QuestionUpload({ testId, onComplete }: { testId: string,
                                 <AlertDescription>{error}</AlertDescription>
                             </Alert>
                         )}
-                        <div className="flex items-center space-x-4">
-                            <label className="flex-1">
+                        <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                            <label className="flex-1 w-full sm:w-auto">
                                 <input
                                     type="file"
                                     accept=".xlsx,.xls"
@@ -118,7 +118,7 @@ export default function QuestionUpload({ testId, onComplete }: { testId: string,
                                     Choose File
                                 </Button>
                             </label>
-                            <Button onClick={handleUpload} disabled={!file || isLoading}>
+                            <Button onClick={handleUpload} disabled={!file || isLoading} className="w-full sm:w-auto">
                                 {isLoading ? 'Uploading...' : 'Upload'}
                             </Button>
                         </div>
