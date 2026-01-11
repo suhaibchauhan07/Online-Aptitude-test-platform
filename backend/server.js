@@ -96,8 +96,12 @@ const connectDB = async () => {
             keepAliveInitialDelay: 300000
         });
         console.log(`Connected to MongoDB: ${conn.connection.host}`);
-        const collections = await mongoose.connection.db.listCollections().toArray();
-        console.log('Available collections:', collections.map(c => c.name));
+        try {
+            const collections = await mongoose.connection.db.listCollections().toArray();
+            console.log('Available collections:', collections.map(c => c.name));
+        } catch (err) {
+            console.log('Could not list collections (this is expected if DB is empty or permissions are limited)');
+        }
         return true;
     } catch (error) {
         console.error('MongoDB connection error:', error);
@@ -161,6 +165,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 const start = async () => {
+    console.log('Starting Server... (Deployment Check: v2 - Health Route Added)');
     try {
         await connectDB();
         app.listen(PORT, () => {
