@@ -125,6 +125,12 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', db: state });
 });
 
+app.get('/api/health', (req, res) => {
+    const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+    const state = states[mongoose.connection.readyState] || 'unknown';
+    res.status(200).json({ status: 'ok', db: state, timestamp: new Date().toISOString() });
+});
+
 app.use((req, res, next) => {
     if (mongoose.connection.readyState !== 1) {
         return res.status(503).json({ message: 'Service unavailable: database not connected' });

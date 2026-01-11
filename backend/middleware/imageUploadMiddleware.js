@@ -5,9 +5,12 @@ import path from 'path';
 
 dotenv.config();
 
+// Hardcode MongoDB URI if not found in .env (Fallback for production/deployment)
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://suhaib07:suhaibmongoatlas123@cluster0.iqxtsqv.mongodb.net/aptitude_test?retryWrites=true&w=majority';
+
 // Create storage engine
 const storage = new GridFsStorage({
-    url: process.env.MONGODB_URI,
+    url: MONGODB_URI,
     file: (req, file) => {
         return new Promise((resolve, reject) => {
             const filename = `${Date.now()}-profile-${file.originalname}`;
