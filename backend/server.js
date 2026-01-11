@@ -86,14 +86,10 @@ if (process.env.NODE_ENV === 'development') {
 const connectDB = async () => {
     try {
         const conn = await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
             serverSelectionTimeoutMS: 10000,
             connectTimeoutMS: 10000,
             socketTimeoutMS: 30000,
-            family: 4,
-            keepAlive: true,
-            keepAliveInitialDelay: 300000
+            family: 4
         });
         console.log(`Connected to MongoDB: ${conn.connection.host}`);
         try {
@@ -110,7 +106,8 @@ const connectDB = async () => {
 };
 
 // Connect to MongoDB
-connectDB();
+// connectDB();
+
 
 // Enhanced request logging middleware
 if (process.env.NODE_ENV === 'development') {
