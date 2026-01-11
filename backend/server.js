@@ -108,7 +108,6 @@ const connectDB = async () => {
 // Connect to MongoDB
 // connectDB();
 
-
 // Enhanced request logging middleware
 if (process.env.NODE_ENV === 'development') {
     app.use((req, res, next) => {

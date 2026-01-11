@@ -26,52 +26,12 @@ const practiceData = [
     title: 'Verbal and Reasoning',
     links: [
       { name: 'Verbal Ability', href: '/practice/verbal-ability' },
-      { name: 'Logical Reasoning', href: '#' },
-      { name: 'Verbal Reasoning', href: '#' },
-      { name: 'Non Verbal Reasoning', href: '#' } 
+      { name: 'Logical Reasoning', href: '/practice/logical-reasoning' },
+      { name: 'Verbal Reasoning', href: '/practice/verbal-reasoning' },
+      { name: 'Non Verbal Reasoning', href: '/practice/Non-Verbal-Reasoning' } 
     ],
     icon: <Brain className="w-6 h-6" />
-  },
-  {
-    title: 'Current Affairs & GK',
-    links: [
-      { name: 'Current Affairs', href: '#' },
-      { name: 'Basic General Knowledge', href: '#' },
-      { name: 'General Science', href: '#' },
-      { name: 'Read more...', href: '#' }
-    ],
-    icon: <Newspaper className="w-6 h-6" />
-  },
-  {
-    title: 'Interview',
-    links: [
-      { name: 'Placement Papers', href: '#' },
-      { name: 'Group Discussion', href: '#' },
-      { name: 'HR Interview', href: '#' },
-      { name: 'Read more...', href: '#' }
-    ],
-    icon: <Briefcase className="w-6 h-6" />
-  },
-  {
-    title: 'Engineering',
-    links: [
-      { name: 'Mechanical Engineering', href: '#' },
-      { name: 'Civil Engineering', href: '#' },
-      { name: 'ECE, EEE, CSE', href: '#' },
-      { name: 'Chemical Engineering', href: '#' }
-    ],
-    icon: <Wrench className="w-6 h-6" />
-  },
-  {
-    title: 'Programming',
-    links: [
-      { name: 'C Programming', href: '#' },
-      { name: 'C++ Programming', href: '#' },
-      { name: 'C# Programming', href: '#' },
-      { name: 'Java Programming', href: '#' }
-    ],
-    icon: <Code className="w-6 h-6" />
-  },
+  }
 ];
 
 const PracticeCard: React.FC<PracticeCardProps> = ({ title, links, index, isVisible, icon }) => {
