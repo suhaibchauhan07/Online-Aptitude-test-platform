@@ -1,5 +1,4 @@
 import Student from '../models/Student.js';
-import fetch from 'node-fetch';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Test from '../models/Test.js';

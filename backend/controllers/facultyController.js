@@ -6,7 +6,6 @@ import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import xlsx from 'xlsx';
 import TestQuestions from '../models/testQuestions.js';
-import fetch from 'node-fetch';
 
 const sendOtpSms = async (phone, otp) => {
   const sid = process.env.TWILIO_ACCOUNT_SID;
