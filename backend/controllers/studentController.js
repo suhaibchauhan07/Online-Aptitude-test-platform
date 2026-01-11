@@ -359,14 +359,17 @@ export const updateStudentProfile = async (req, res) => {
     }
 };
 
+import { uploadToGridFS } from '../utils/gridfsUpload.js';
+
 export const uploadProfilePicture = async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: "No file uploaded" });
         }
 
+        const { filename } = await uploadToGridFS(req.file, 'profilePictures');
         // Construct the file URL using the image serving route
-        const fileUrl = `/api/images/${req.file.filename}`;
+        const fileUrl = `/api/images/${filename}`;
 
         const student = await Student.findById(req.user.id);
         if (!student) {

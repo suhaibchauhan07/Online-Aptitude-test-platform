@@ -430,13 +430,16 @@ export const updateFacultyProfile = async (req, res) => {
     }
 };
 
+import { uploadToGridFS } from '../utils/gridfsUpload.js';
+
 export const uploadProfilePicture = async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: "No file uploaded" });
         }
 
-        const fileUrl = `/api/images/${req.file.filename}`;
+        const { filename } = await uploadToGridFS(req.file, 'profilePictures');
+        const fileUrl = `/api/images/${filename}`;
 
         const faculty = await Faculty.findById(req.user.id);
         if (!faculty) {
