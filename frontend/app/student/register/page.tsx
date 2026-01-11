@@ -111,9 +111,9 @@ export default function StudentRegister() {
   }
 
   // 🛠️ Original class list
-  const classes = ["B.Tech CSE", "B.Tech ECE", "B.Tech ME", "B.Tech CE", "BCA", "MCA"]
+  const classes = ["B.Tech CSE", "B.Tech IT", "B.Tech ME", "B.Tech ELE", "BCA", "BBA", "MBA"]
   const sections = ["A", "B", "C", "D"]
-  const departments = ["CSE", "ECE", "ME", "CE", "BCA", "MCA"]
+  const departments = ["CSE", "IT", "BBA", "MBA", "BCA", "ME", "ELE"]
   const years = ["1", "2", "3", "4"]
 
   return (

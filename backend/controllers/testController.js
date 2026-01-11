@@ -1,5 +1,4 @@
 import Test from "../models/Test.js";
-import UserTest from "../models/UserTest.js";
 import TestQuestion from '../models/testQuestions.js';
 import StudentTest from '../models/studentTestModel.js';
  
@@ -261,7 +260,6 @@ export const deleteTest = async (req, res) => {
     if (!test) return res.status(404).json({ message: 'Test not found or unauthorized' });
     await Promise.all([
       TestQuestion.deleteMany({ testId }),
-      UserTest.deleteMany({ testId }),
       StudentTest.deleteMany({ testId })
     ]);
     await Test.deleteOne({ _id: testId });

@@ -16,6 +16,7 @@ interface StudentLayoutProps {
 interface StudentProfile {
   name: string;
   className: string;
+  profilePicture?: string;
 }
 
 export function StudentLayout({ children }: StudentLayoutProps) {
@@ -55,7 +56,8 @@ export function StudentLayout({ children }: StudentLayoutProps) {
             const studentData = JSON.parse(storedStudent);
             setProfile({
               name: studentData.name,
-              className: studentData.className
+              className: studentData.className,
+              profilePicture: studentData.profilePicture
             });
         }
 
@@ -71,7 +73,8 @@ export function StudentLayout({ children }: StudentLayoutProps) {
           const data = await response.json();
           setProfile({
             name: data.name,
-            className: data.className
+            className: data.className,
+            profilePicture: data.profilePicture
           });
         }
       } catch (error) {
@@ -122,7 +125,10 @@ export function StudentLayout({ children }: StudentLayoutProps) {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <Avatar className="h-9 w-9 border-2 border-white shadow-sm ring-1 ring-gray-100 transition-transform hover:scale-105 cursor-pointer">
-                <AvatarImage src="" alt="Student" />
+                <AvatarImage 
+                  src={profile?.profilePicture ? `${API_BASE_URL.replace('/api', '')}${profile.profilePicture}` : ""} 
+                  alt="Student" 
+                />
                 <AvatarFallback className="bg-blue-50 text-blue-600 font-bold">
                   {profile?.name ? profile.name.charAt(0).toUpperCase() : 'S'}
                 </AvatarFallback>

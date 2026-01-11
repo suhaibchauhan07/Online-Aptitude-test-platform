@@ -18,6 +18,7 @@ interface FacultyLayoutProps {
 interface FacultyProfile {
   name: string;
   department: string;
+  profilePicture?: string;
 }
 
 export function FacultyLayout({ children }: FacultyLayoutProps) {
@@ -60,7 +61,8 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
         const data = await response.json();
         setProfile({
           name: data.name || 'Name not available',
-          department: data.department || 'Department not available'
+          department: data.department || 'Department not available',
+          profilePicture: data.profilePicture
         });
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -97,7 +99,10 @@ export function FacultyLayout({ children }: FacultyLayoutProps) {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9 border-2 border-white shadow-sm ring-1 ring-gray-100 transition-transform hover:scale-105 cursor-pointer">
-                  <AvatarImage src="" alt="Faculty" />
+                  <AvatarImage 
+                    src={profile?.profilePicture ? `${API_BASE_URL.replace('/api', '')}${profile.profilePicture}` : ""} 
+                    alt="Faculty" 
+                  />
                   <AvatarFallback className="bg-blue-50 text-blue-600 font-bold">
                     {profile?.name ? profile.name.charAt(0).toUpperCase() : 'F'}
                   </AvatarFallback>

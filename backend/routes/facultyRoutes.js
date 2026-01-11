@@ -15,9 +15,11 @@ import {
     verifyFacultyPasswordResetOtp,
     resetFacultyPassword,
     lookupFacultyRegisteredPhoneByEmail,
-    getDashboardStats
+    getDashboardStats,
+    uploadProfilePicture
 } from '../controllers/facultyController.js';
 import uploadMiddleware from '../middleware/uploadMiddleware.js';
+import imageUpload from '../middleware/imageUploadMiddleware.js';
 import { authMiddleware, requireRole } from '../middleware/authMiddleware.js';
 import {
     authRateLimiter,
@@ -41,6 +43,7 @@ router.post('/forgot-password/reset', authSpeedLimiter, authRateLimiter, resetFa
 router.get('/dashboard-stats', authMiddleware, requireRole(['faculty']), getDashboardStats);
 router.get('/profile', authMiddleware, requireRole(['faculty']), getFacultyProfile);
 router.put('/profile', authMiddleware, requireRole(['faculty']), mutationRateLimiter, updateFacultyProfile);
+router.post('/profile-picture', authMiddleware, requireRole(['faculty']), mutationRateLimiter, imageUpload.single('profilePicture'), uploadProfilePicture);
 router.post('/create-class', authMiddleware, requireRole(['faculty']), mutationRateLimiter, createClass);
 router.post('/create-test', authMiddleware, requireRole(['faculty']), mutationRateLimiter, createTest);
 router.post(

@@ -38,10 +38,16 @@ const studentSchema = new mongoose.Schema({
     trim: true,
     match: [/^[0-9]{10}$/, 'Please enter a valid 10-digit phone number']
   },
+  profilePicture: { 
+    type: String, 
+    trim: true,
+    default: ''
+  },
   department: {
     type: String,
     required: false,
-    trim: true
+    trim: true,
+    enum: ['CSE', 'IT', 'BBA', 'MBA', 'BCA', 'ME', 'ELE']
   },
   year: {
     type: Number,

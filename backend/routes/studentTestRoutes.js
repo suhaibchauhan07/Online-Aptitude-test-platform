@@ -13,7 +13,8 @@ import {
     requestStudentPasswordResetOtp,
     verifyStudentPasswordResetOtp,
     resetStudentPassword,
-    lookupStudentRegisteredPhoneByEmail
+    lookupStudentRegisteredPhoneByEmail,
+    uploadProfilePicture
 } from '../controllers/studentController.js';
 import { 
     getAvailableTests,
@@ -26,6 +27,7 @@ import {
     authSpeedLimiter,
     mutationRateLimiter
 } from '../middleware/rateLimitMiddleware.js';
+import imageUpload from '../middleware/imageUploadMiddleware.js';
 
 const router = express.Router();
 
@@ -43,6 +45,7 @@ router.use(authMiddleware);
 // Profile routes
 router.get('/profile', getStudentProfile);
 router.put('/profile', mutationRateLimiter, updateStudentProfile);
+router.post('/profile-picture', mutationRateLimiter, imageUpload.single('profilePicture'), uploadProfilePicture);
 
 // Test routes
 router.get('/tests/available', getAvailableTests);

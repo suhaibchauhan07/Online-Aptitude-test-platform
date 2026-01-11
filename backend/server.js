@@ -8,6 +8,7 @@ import path from 'path';
 import studentTestRoutes from './routes/studentTestRoutes.js';
 import facultyRoutes from './routes/facultyRoutes.js';
 import testRoutes from './routes/testRoutes.js';
+import imageRoutes from './routes/imageRoutes.js';
 import {
     globalRateLimiter,
     globalSpeedLimiter
@@ -135,6 +136,7 @@ app.use((req, res, next) => {
 app.use('/api/student', studentTestRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/tests', testRoutes);
+app.use('/api/images', imageRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -301,7 +301,8 @@ export const loginStudent = async (req, res) => {
             email: student.email,
             className: student.className,
             department: student.department,
-            year: student.year
+            year: student.year,
+            profilePicture: student.profilePicture
         };
 
         res.status(200).json({
@@ -328,7 +329,7 @@ export const getStudentProfile = async (req, res) => {
 // Update student profile
 export const updateStudentProfile = async (req, res) => {
     try {
-        const { name, email, className, department, year } = req.body;
+        const { name, email, className, department, year, profilePicture } = req.body;
         
         const student = await Student.findById(req.user.id);
         if (!student) {
@@ -340,6 +341,7 @@ export const updateStudentProfile = async (req, res) => {
         student.className = className || student.className;
         student.department = department || student.department;
         student.year = year || student.year;
+        if (profilePicture !== undefined) student.profilePicture = profilePicture;
 
         await student.save();
 
@@ -350,10 +352,38 @@ export const updateStudentProfile = async (req, res) => {
             email: student.email,
             className: student.className,
             department: student.department,
-            year: student.year
+            year: student.year,
+            profilePicture: student.profilePicture
         });
     } catch (error) {
         res.status(500).json({ message: 'Error updating profile', error: error.message });
+    }
+};
+
+export const uploadProfilePicture = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        // Construct the file URL using the image serving route
+        const fileUrl = `/api/images/${req.file.filename}`;
+
+        const student = await Student.findById(req.user.id);
+        if (!student) {
+            return res.status(404).json({ message: "Student not found" });
+        }
+
+        student.profilePicture = fileUrl;
+        await student.save();
+
+        res.status(200).json({ 
+            message: "Profile picture uploaded successfully", 
+            profilePicture: fileUrl 
+        });
+    } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        res.status(500).json({ message: "Error uploading profile picture", error: error.message });
     }
 };
 

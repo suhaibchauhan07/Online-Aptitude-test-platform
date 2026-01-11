@@ -431,6 +431,32 @@ export const updateFacultyProfile = async (req, res) => {
     }
 };
 
+export const uploadProfilePicture = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const fileUrl = `/api/images/${req.file.filename}`;
+
+        const faculty = await Faculty.findById(req.user.id);
+        if (!faculty) {
+            return res.status(404).json({ message: "Faculty not found" });
+        }
+
+        faculty.profilePicture = fileUrl;
+        await faculty.save();
+
+        res.status(200).json({ 
+            message: "Profile picture uploaded successfully", 
+            profilePicture: fileUrl 
+        });
+    } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        res.status(500).json({ message: "Error uploading profile picture", error: error.message });
+    }
+};
+
 export const createClass = async (req, res) => {
     try {
         const { className, section } = req.body;
@@ -827,6 +853,6 @@ export const resetFacultyPassword = async (req, res) => {
     await faculty.save();
     res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Error resetting password', error: error.message });
   }
 };

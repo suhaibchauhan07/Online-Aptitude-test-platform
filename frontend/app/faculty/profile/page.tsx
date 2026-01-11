@@ -199,7 +199,10 @@ export default function FacultyProfilePage() {
         
         <div className="relative">
           <Avatar className="h-24 w-24 md:h-28 md:w-28 ring-4 ring-white/70 shadow-xl">
-            <AvatarImage src={profile.profilePicture || "/default-profile.png"} alt="Profile" />
+            <AvatarImage 
+              src={profile.profilePicture ? `${API_BASE_URL.replace('/api', '')}${profile.profilePicture}` : "/default-profile.png"} 
+              alt="Profile" 
+            />
             <AvatarFallback className="text-2xl sm:text-3xl">{profile.name?.charAt(0) || "F"}</AvatarFallback>
           </Avatar>
           <input
