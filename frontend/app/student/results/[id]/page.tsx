@@ -1,12 +1,37 @@
 "use client";
 import { use, useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, AlertTriangle, Clock, Trophy, Award, Star, TrendingUp, Calendar, Target, Zap, FileText, Brain, Timer, ArrowRight, ChevronLeft } from "lucide-react";
+import { AlertTriangle, Trophy, Award, Star, TrendingUp, Target, Zap, Brain, ChevronLeft, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import API_BASE_URL from "@/app/config/api"
+import dynamic from 'next/dynamic';
+import { Skeleton } from "@/components/ui/skeleton";
+
+const ResultStatsGrid = dynamic(() => import('@/components/student/ResultStatsGrid'), {
+  loading: () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {[1, 2, 3, 4].map((i) => (
+        <Skeleton key={i} className="h-40 rounded-xl" />
+      ))}
+    </div>
+  ),
+  ssr: false
+});
+
+const QuestionAnalysisList = dynamic(() => import('@/components/student/QuestionAnalysisList'), {
+  loading: () => (
+    <div className="space-y-6">
+      <Skeleton className="h-8 w-48" />
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} className="h-64 rounded-xl" />
+      ))}
+    </div>
+  ),
+  ssr: false
+});
 
 type Question = { id: string; type: string; correctAnswer: any; marks?: number }
 
@@ -264,171 +289,21 @@ export default function TestResult({ params }: { params: Promise<{ id: string }>
                 )}
 
 				{/* Stats Grid */}
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-					{/* Overall Score Card */}
-					<Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden ring-1 ring-gray-200">
-						<div className={`h-1 w-full ${scoreData.bgColor.replace('bg-', 'bg-gradient-to-r from-').replace('50', '400')} to-gray-400`}></div>
-						<CardContent className="p-6">
-							<div className="flex justify-between items-start mb-4">
-								<div className="p-2 bg-blue-50 rounded-lg">
-                                    <Trophy className="h-6 w-6 text-blue-600" />
-                                </div>
-                                <Badge className={scoreData.badge}>{percentage}%</Badge>
-							</div>
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-gray-500">Overall Score</p>
-                                <h3 className="text-2xl font-bold text-gray-900">{marksObtained}/{totalMarks}</h3>
-                            </div>
-                            <Progress value={percentage} className="mt-4 h-1.5" />
-						</CardContent>
-					</Card>
-
-					{/* Correct Answers Card */}
-					<Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden ring-1 ring-gray-200">
-                        <div className="h-1 w-full bg-gradient-to-r from-green-400 to-emerald-500"></div>
-						<CardContent className="p-6">
-                            <div className="flex justify-between items-start mb-4">
-								<div className="p-2 bg-green-50 rounded-lg">
-                                    <CheckCircle className="h-6 w-6 text-green-600" />
-                                </div>
-                                <Badge variant="secondary" className="bg-green-100 text-green-700">Correct</Badge>
-							</div>
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-gray-500">Correct Answers</p>
-                                <h3 className="text-2xl font-bold text-gray-900">{analytics.correctCount} <span className="text-sm text-gray-400 font-normal">/ {analytics.totalQuestions}</span></h3>
-                            </div>
-                            <Progress value={analytics.accuracyRate} className="mt-4 h-1.5 bg-green-100 [&>div]:bg-green-500" />
-						</CardContent>
-					</Card>
-
-					{/* Incorrect Answers Card */}
-					<Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden ring-1 ring-gray-200">
-                        <div className="h-1 w-full bg-gradient-to-r from-red-400 to-rose-500"></div>
-						<CardContent className="p-6">
-                            <div className="flex justify-between items-start mb-4">
-								<div className="p-2 bg-red-50 rounded-lg">
-                                    <XCircle className="h-6 w-6 text-red-600" />
-                                </div>
-                                <Badge variant="secondary" className="bg-red-100 text-red-700">Incorrect</Badge>
-							</div>
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-gray-500">Incorrect Answers</p>
-                                <h3 className="text-2xl font-bold text-gray-900">{analytics.incorrectCount} <span className="text-sm text-gray-400 font-normal">/ {analytics.totalQuestions}</span></h3>
-                            </div>
-                            <Progress value={(analytics.incorrectCount / analytics.totalQuestions) * 100} className="mt-4 h-1.5 bg-red-100 [&>div]:bg-red-500" />
-						</CardContent>
-					</Card>
-
-					{/* Time Performance Card */}
-					<Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden ring-1 ring-gray-200">
-                        <div className="h-1 w-full bg-gradient-to-r from-orange-400 to-yellow-500"></div>
-						<CardContent className="p-6">
-                            <div className="flex justify-between items-start mb-4">
-								<div className="p-2 bg-orange-50 rounded-lg">
-                                    <Timer className="h-6 w-6 text-orange-600" />
-                                </div>
-                                <Badge variant="secondary" className="bg-orange-100 text-orange-700">Time</Badge>
-							</div>
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-gray-500">Time Taken</p>
-                                <h3 className="text-2xl font-bold text-gray-900">{result.timeTaken || 0}m</h3>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-4 font-medium">
-                                {Math.round(analytics.avgTimePerQuestion * 60)}s per question avg
-                            </p>
-						</CardContent>
-					</Card>
-				</div>
+				<ResultStatsGrid 
+					scoreData={scoreData}
+					percentage={percentage}
+					marksObtained={marksObtained}
+					totalMarks={totalMarks}
+					analytics={analytics}
+					timeTaken={result.timeTaken || 0}
+				/>
 
 				{/* Detailed Question Analysis */}
 				{result.answers && result.answers.length > 0 && (
-					<div className="space-y-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <FileText className="h-6 w-6 text-gray-400" />
-                            <h2 className="text-2xl font-bold text-gray-900">Question Analysis</h2>
-                        </div>
-						
-                        <div className="grid grid-cols-1 gap-6">
-                            {result.answers.map((answer: any, index: number) => {
-                                const questionNumber = index + 1;
-                                const isCorrect = answer.isCorrect;
-                                const userAnswer = answer.selectedAnswer;
-                                const totalMarksForThis = Number(answer.questionMarks ?? marksMap.get(String(answer.questionId)) ?? 0);
-                                const marksForThis = answer.marksObtained || 0;
-                                
-                                return (
-                                    <Card 
-                                        key={answer.questionId || index}
-                                        className={`border-0 shadow-sm ring-1 ring-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md ${
-                                            isCorrect ? 'bg-white' : 'bg-white'
-                                        }`}
-                                    >
-                                        <div className={`h-full w-1 absolute left-0 top-0 bottom-0 ${isCorrect ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                        <CardContent className="p-6 pl-8 relative">
-                                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
-                                                <div className="flex items-start gap-4">
-                                                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${
-                                                        isCorrect ? 'bg-green-500' : 'bg-red-500'
-                                                    }`}>
-                                                        {questionNumber}
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-lg font-bold text-gray-900">Question {questionNumber}</h4>
-                                                        <p className="text-sm text-gray-500 font-medium">Marks: {totalMarksForThis}</p>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="flex items-center gap-2">
-                                                    {isCorrect ? (
-                                                        <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-0 px-3 py-1">
-                                                            <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
-                                                            Correct
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-0 px-3 py-1">
-                                                            <XCircle className="h-3.5 w-3.5 mr-1.5" />
-                                                            Incorrect
-                                                        </Badge>
-                                                    )}
-                                                    <Badge variant="outline" className="font-mono">
-                                                        +{marksForThis}
-                                                    </Badge>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 rounded-xl p-4 border border-gray-100">
-                                                <div className="space-y-2">
-                                                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex items-center gap-1">
-                                                        Your Answer
-                                                    </span>
-                                                    <div className={`p-3 rounded-lg font-medium text-sm border ${
-                                                        isCorrect 
-                                                            ? 'bg-green-50 text-green-900 border-green-200' 
-                                                            : 'bg-red-50 text-red-900 border-red-200'
-                                                    }`}>
-                                                        {userAnswer || <span className="text-gray-400 italic">No answer provided</span>}
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-2">
-                                                     <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex items-center gap-1">
-                                                        Result
-                                                    </span>
-                                                    <div className="flex items-center gap-2 p-3">
-                                                        {isCorrect ? (
-                                                            <span className="text-sm font-medium text-green-700">Excellent! You got this right.</span>
-                                                        ) : (
-                                                            <span className="text-sm font-medium text-red-700">Review this topic to improve.</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                );
-                            })}
-                        </div>
-					</div>
+					<QuestionAnalysisList 
+						answers={result.answers}
+						marksMap={marksMap}
+					/>
 				)}
 
 				{/* Section Performance */}

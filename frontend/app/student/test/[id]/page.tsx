@@ -3,12 +3,37 @@
 import { use, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group" 
 import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-import { Clock, AlertCircle, X, CheckCircle2, AlertTriangle, Flag, Menu, Maximize } from "lucide-react"
+import { Clock, AlertCircle, AlertTriangle, Flag, Menu, Maximize } from "lucide-react"
+import dynamic from 'next/dynamic'
+import { Skeleton } from "@/components/ui/skeleton"
+
+const QuestionOptions = dynamic(() => import('@/components/student/test/QuestionOptions'), {
+  loading: () => (
+    <div className="space-y-4 sm:space-y-5 mb-8 sm:mb-10">
+      <Skeleton className="h-16 w-full rounded-xl" />
+      <Skeleton className="h-16 w-full rounded-xl" />
+      <Skeleton className="h-16 w-full rounded-xl" />
+      <Skeleton className="h-16 w-full rounded-xl" />
+    </div>
+  ),
+  ssr: false
+})
+
+const TestSidebar = dynamic(() => import('@/components/student/test/TestSidebar'), {
+  loading: () => (
+    <aside className="hidden lg:block w-[420px] bg-white border-l-2 border-gray-200 p-8">
+      <Skeleton className="h-40 w-full mb-8 rounded-xl" />
+      <div className="grid grid-cols-5 gap-3">
+        {[...Array(20)].map((_, i) => (
+          <Skeleton key={i} className="h-14 w-14 rounded-full" />
+        ))}
+      </div>
+    </aside>
+  ),
+  ssr: false
+})
 import API_BASE_URL from "@/app/config/api"
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -597,60 +622,12 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
             </div>
 
             {/* Options */}
-              {qType === "mcq" && Array.isArray(question.options) && (
-                <RadioGroup
-                  value={answers[question.id]?.toString() || ""}
-                  onValueChange={(value) => handleAnswerChange(question.id, value)}
-                  className="space-y-4 sm:space-y-5 mb-8 sm:mb-10"
-                >
-                  {question.options.map((option, idx) => (
-                  <div 
-                    key={idx} 
-                    className="option-item flex items-center space-x-3 sm:space-x-4 p-4 sm:p-5 bg-gradient-to-r from-white to-gray-50/50 hover:from-blue-50 hover:to-indigo-50/50 rounded-xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg cursor-pointer"
-                    style={{ animationDelay: `${idx * 0.1}s` }}
-                  >
-                    <RadioGroupItem value={option} id={`option-${question.id}-${idx}`} className="w-5 h-5" />
-                    <Label htmlFor={`option-${question.id}-${idx}`} className="flex-1 cursor-pointer text-gray-800 text-base sm:text-lg font-medium">
-                      {option}
-                    </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              )}
-
-              {qType === "msq" && Array.isArray(question.options) && (
-              <div className="space-y-4 sm:space-y-5 mb-8 sm:mb-10">
-                  {question.options.map((option, idx) => (
-                  <div 
-                    key={idx} 
-                    className="option-item flex items-center space-x-3 sm:space-x-4 p-4 sm:p-5 bg-gradient-to-r from-white to-gray-50/50 hover:from-blue-50 hover:to-indigo-50/50 rounded-xl border-2 border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg cursor-pointer"
-                    style={{ animationDelay: `${idx * 0.1}s` }}
-                  >
-                      <Checkbox
-                        id={`msq-option-${question.id}-${idx}`}
-                        checked={(answers[question.id] || []).includes(option)}
-                        onCheckedChange={() => handleMSQChange(question.id, option)}
-                      className="w-5 h-5"
-                      />
-                    <Label htmlFor={`msq-option-${question.id}-${idx}`} className="flex-1 cursor-pointer text-gray-800 text-base sm:text-lg font-medium">
-                      {option}
-                    </Label>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {qType === "nat" && (
-              <div className="mb-8 sm:mb-10">
-                  <Input
-                    id={`nat-answer-${question.id}`}
-                    value={answers[question.id] || ""}
-                    onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-                    placeholder="Enter your answer"
-                  className="w-full max-w-lg text-base sm:text-lg p-3 sm:p-4 border-2 border-gray-300 focus:border-blue-500 rounded-xl"
-                  />
-                </div>
-              )}
+            <QuestionOptions
+              question={question}
+              answers={answers}
+              handleAnswerChange={handleAnswerChange}
+              handleMSQChange={handleMSQChange}
+            />
 
             {/* Mark for Review */}
             <div className="flex justify-end animate-fade-in-up mb-6 sm:mb-8" style={{ animationDelay: '0.3s' }}>
@@ -699,105 +676,15 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
           </div>
         </main>
         
-        <aside
-          className={`
-            w-full lg:w-[420px] bg-white/95 backdrop-blur-sm border-t-2 lg:border-t-0 lg:border-l-2 border-gray-200 shadow-xl overflow-y-auto
-            ${sidebarOpen ? 'fixed inset-0 z-50 lg:static' : 'hidden lg:block'}
-          `}
-        >
-          {sidebarOpen && (
-            <div className="absolute inset-0 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)}></div>
-          )}
-          <div
-            className={`absolute right-0 top-0 h-full w-[90%] max-w-sm bg-white/95 backdrop-blur-sm shadow-2xl transform transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none lg:bg-transparent lg:w-full lg:max-w-none ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0`}
-            style={{ transformStyle: 'preserve-3d' }}
-          >
-          <div className="p-5 sm:p-8">
-            <div className="flex items-center justify-between lg:hidden mb-3">
-              <h3 className="text-lg font-bold text-gray-800">Navigation</h3>
-              <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 shadow-sm" onClick={() => setSidebarOpen(false)} aria-label="Close questions">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            {/* Question Status Summary */}
-            <div className="mb-8 space-y-4 bg-gradient-to-br from-gray-50 to-blue-50/30 p-6 rounded-xl border border-gray-200">
-              <div className="flex items-center gap-3 text-lg">
-                <div className="w-6 h-6 rounded-full bg-blue-600 shadow-sm"></div>
-                <span className="text-gray-800 font-medium">{statusCounts.answered} Answered</span>
-              </div>
-              <div className="flex items-center gap-3 text-lg">
-                <div className="w-6 h-6 rounded-full border-2 border-gray-400 bg-white shadow-sm"></div>
-                <span className="text-gray-800 font-medium">{statusCounts.unanswered} Unanswered</span>
-              </div>
-              <div className="flex items-center gap-3 text-lg">
-                <div className="relative">
-                  <div className="w-6 h-6 rounded-full bg-blue-600 shadow-sm"></div>
-                  <CheckCircle2 className="h-5 w-5 text-green-500 fill-green-500 absolute -bottom-0.5 -right-0.5" />
-                </div>
-                <span className="text-gray-800 font-medium">{statusCounts.answeredMarked} Answered & marked</span>
-              </div>
-              <div className="flex items-center gap-3 text-lg">
-                <div className="relative">
-                  <div className="w-6 h-6 rounded-full border-2 border-gray-400 bg-white shadow-sm"></div>
-                  <CheckCircle2 className="h-5 w-5 text-green-500 fill-green-500 absolute -bottom-0.5 -right-0.5" />
-                </div>
-                <span className="text-gray-800 font-medium">{statusCounts.unansweredMarked} Unanswered & marked</span>
-              </div>
-            </div>
-
-            {/* Question Navigation */}
-            <div className="mb-8">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-5">Choose a question</h3>
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-3 max-h-[50vh] lg:max-h-none overflow-y-auto pr-1">
-                {test.questions.map((q, index) => {
-                  const status = getQuestionStatus(q.id)
-                  const isCurrent = currentQuestion === index
-                  
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => { setCurrentQuestion(index); if (sidebarOpen) setSidebarOpen(false) }}
-                      className={`
-                        question-nav-btn relative w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 font-bold text-base sm:text-lg
-                        flex items-center justify-center shadow-md
-                        ${
-                          isCurrent
-                            ? 'bg-white border-blue-600 text-blue-600 ring-4 ring-blue-200 shadow-lg'
-                            : status === 'answered'
-                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 border-blue-600 text-white shadow-lg'
-                            : status === 'answered-marked'
-                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 border-blue-600 text-white shadow-lg'
-                            : status === 'unanswered-marked'
-                            ? 'bg-white border-gray-400 text-gray-700'
-                            : 'bg-white border-gray-300 text-gray-700'
-                        }
-                      `}
-                    >
-                      <span className={isCurrent ? 'text-blue-600 font-bold' : status === 'answered' || status === 'answered-marked' ? 'text-white font-bold' : 'text-gray-700 font-semibold'}>
-                        {index + 1}
-                      </span>
-                      <span className={`absolute -top-1 -right-1 text-xs sm:text-base font-bold ${isCurrent ? 'text-blue-600' : status === 'answered' || status === 'answered-marked' ? 'text-white' : 'text-gray-700'}`}>*</span>
-                      {status === 'answered-marked' && (
-                        <CheckCircle2 className="absolute -bottom-0.5 -right-0.5 h-4 w-4 text-green-500 fill-green-500" />
-                      )}
-                      {status === 'unanswered-marked' && (
-                        <CheckCircle2 className="absolute -bottom-0.5 -right-0.5 h-4 w-4 text-green-500 fill-green-500" />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Instruction */}
-            <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl p-4 sm:p-5 shadow-md">
-              <p className="text-base font-medium text-red-700 leading-relaxed">
-                Provide a response to the question marked with an asterisk (*), as it is a mandatory requirement.
-              </p>
-            </div>
-          </div>
-          </div>
-        </aside>
+        <TestSidebar
+          test={test}
+          currentQuestion={currentQuestion}
+          setCurrentQuestion={setCurrentQuestion}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          statusCounts={statusCounts}
+          getQuestionStatus={getQuestionStatus}
+        />
       </div>
 
       {/* Full Screen Overlay */}
