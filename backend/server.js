@@ -121,6 +121,11 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 app.get('/health', (req, res) => {
+    // Explicitly prevent caching for health checks
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
     const state = states[mongoose.connection.readyState] || 'unknown';
     res.status(200).json({ status: 'ok', db: state });
@@ -168,21 +173,6 @@ const start = async () => {
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
             console.log(`CORS enabled for: ${allowedOrigins.join(', ')}`);
-
-            // Self-ping to keep Render awake (every 14 minutes)
-            if (process.env.NODE_ENV === 'production') {
-                const interval = 14 * 60 * 1000; // 14 minutes
-                const url = `https://online-aptitude-test-platform-1.onrender.com/health`;
-                console.log(`Setting up self-ping to ${url} every ${interval}ms`);
-                setInterval(async () => {
-                    try {
-                        const response = await fetch(url);
-                        console.log(`Self-ping status: ${response.status}`);
-                    } catch (err) {
-                        console.error('Self-ping failed:', err.message);
-                    }
-                }, interval);
-            }
         });
     } catch (err) {
         console.error('Initial DB connection failed. Retrying in 5s...');
