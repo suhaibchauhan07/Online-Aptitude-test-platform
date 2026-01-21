@@ -89,7 +89,8 @@ const connectDB = async () => {
             serverSelectionTimeoutMS: 10000,
             connectTimeoutMS: 10000,
             socketTimeoutMS: 30000,
-            family: 4
+            family: 4,
+            maxPoolSize: 10
         });
         console.log(`Connected to MongoDB: ${conn.connection.host}`);
         try {
@@ -167,6 +168,21 @@ const start = async () => {
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
             console.log(`CORS enabled for: ${allowedOrigins.join(', ')}`);
+
+            // Self-ping to keep Render awake (every 14 minutes)
+            if (process.env.NODE_ENV === 'production') {
+                const interval = 14 * 60 * 1000; // 14 minutes
+                const url = `https://online-aptitude-test-platform-1.onrender.com/health`;
+                console.log(`Setting up self-ping to ${url} every ${interval}ms`);
+                setInterval(async () => {
+                    try {
+                        const response = await fetch(url);
+                        console.log(`Self-ping status: ${response.status}`);
+                    } catch (err) {
+                        console.error('Self-ping failed:', err.message);
+                    }
+                }, interval);
+            }
         });
     } catch (err) {
         console.error('Initial DB connection failed. Retrying in 5s...');
