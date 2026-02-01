@@ -1,10 +1,17 @@
 import type React from "react"
+import { useEffect } from "react"
 import Link from "next/link"
 import { GraduationCap, BookOpen, Award, ArrowRight, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import API_BASE_URL from "@/app/config/api"
 
 export default function LandingPage() {
+  // Wake up the backend on initial load (for free-tier cold starts)
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/health`).catch(() => {})
+  }, [])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-white flex flex-col overflow-x-hidden">
       {/* Header */}

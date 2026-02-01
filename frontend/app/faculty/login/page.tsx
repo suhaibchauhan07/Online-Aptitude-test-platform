@@ -16,6 +16,11 @@ export default function FacultyLogin() {
   React.useEffect(() => {
     try { router.prefetch('/faculty/dashboard') } catch {}
   }, [router])
+
+  // Wake up the backend on initial load (for free-tier cold starts)
+  React.useEffect(() => {
+    fetch(`${API_BASE_URL}/health`).catch(() => {})
+  }, [])
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
@@ -47,7 +52,8 @@ export default function FacultyLogin() {
 
     try {
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 20000)
+      // Increase timeout to 120 seconds for cold starts
+      const timeout = setTimeout(() => controller.abort(), 120000)
       const response = await fetch(`${API_BASE_URL}/faculty/login`, {
         method: 'POST',
         headers: {
@@ -148,7 +154,9 @@ export default function FacultyLogin() {
             className="w-full bg-gradient-to-r from-[#0074b7] to-[#005fa3] hover:shadow-lg text-white font-bold py-3.5 sm:py-4 text-lg rounded-xl focus:ring-2 focus:ring-blue-400 transition-all duration-200 relative overflow-hidden group"
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? (
+              isLongWait ? "Waking up server..." : "Logging in..."
+            ) : "Login"}
             <span className="absolute inset-0 bg-white/40 rounded-full pointer-events-none scale-0 group-active:scale-100 transition-transform duration-500"></span>
           </Button>
           <div className="text-center text-sm mt-2">

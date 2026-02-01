@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
@@ -15,6 +15,12 @@ import { API_BASE_URL } from "@/app/config/api"
 
 export default function StudentRegister() {
   const router = useRouter()
+
+  // Wake up the backend on initial load (for free-tier cold starts)
+  React.useEffect(() => {
+    fetch(`${API_BASE_URL}/health`).catch(() => {})
+  }, [])
+
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
