@@ -47,6 +47,19 @@ export default function StudentRegister() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  // Add state to track long wait times
+  const [isLongWait, setIsLongWait] = useState(false)
+
+  React.useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (isLoading) {
+      timer = setTimeout(() => setIsLongWait(true), 5000)
+    } else {
+      setIsLongWait(false)
+    }
+    return () => clearTimeout(timer)
+  }, [isLoading])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -79,6 +92,9 @@ export default function StudentRegister() {
     }
 
     setIsLoading(true)
+    const controller = new AbortController()
+    // Increase timeout to 120 seconds for cold starts
+    const timeout = setTimeout(() => controller.abort(), 120000)
 
     try {
       const response = await fetch(`${API_BASE_URL}/student/register`, {
@@ -96,8 +112,10 @@ export default function StudentRegister() {
           department: formData.department,
           year: formData.year ? parseInt(formData.year) : 0
         }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeout)
       const data = await response.json();
 
       if (!response.ok) {

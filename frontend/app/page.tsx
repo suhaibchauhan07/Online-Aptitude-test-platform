@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useEffect } from "react"
+import React, { useEffect } from "react"
 import Link from "next/link"
 import { GraduationCap, BookOpen, Award, ArrowRight, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"

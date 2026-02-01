@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React, { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { BookOpen, Eye, EyeOff, AlertCircle } from "lucide-react"
@@ -40,6 +38,16 @@ export default function FacultyRegister() {
   // Add state to track long wait times
   const [isLongWait, setIsLongWait] = useState(false)
 
+  React.useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (isLoading) {
+      timer = setTimeout(() => setIsLongWait(true), 5000)
+    } else {
+      setIsLongWait(false)
+    }
+    return () => clearTimeout(timer)
+  }, [isLoading])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -66,6 +74,9 @@ export default function FacultyRegister() {
     }
 
     setIsLoading(true)
+    const controller = new AbortController()
+    // Increase timeout to 120 seconds for cold starts
+    const timeout = setTimeout(() => controller.abort(), 120000)
 
     try {
       const response = await fetch(`${API_BASE_URL}/faculty/register`, {
@@ -80,8 +91,10 @@ export default function FacultyRegister() {
           password: formData.password,
           facultyId: formData.email.split('@')[0] // Generate facultyId from email
         }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeout)
       const data = await response.json();
 
       if (!response.ok) {

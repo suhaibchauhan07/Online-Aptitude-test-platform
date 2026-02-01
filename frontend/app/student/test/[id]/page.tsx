@@ -1,6 +1,6 @@
 // Test Details Page
 "use client"
-import { use, useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -55,7 +55,12 @@ interface Test {
 }
 
 export default function TestPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+  const [id, setId] = useState<string | null>(null)
+  
+  useEffect(() => {
+    params.then((p) => setId(p.id))
+  }, [params])
+
   const router = useRouter()
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<Record<string, any>>({})
@@ -176,6 +181,8 @@ export default function TestPage({ params }: { params: Promise<{ id: string }> }
 
   // Fetch test data
   useEffect(() => {
+    if (!id) return;
+
     const fetchTestData = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/student/tests/${id}`, {
