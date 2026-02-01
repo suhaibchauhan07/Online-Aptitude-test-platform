@@ -206,7 +206,9 @@ export default function FacultyRegister() {
                   className="w-full bg-gradient-to-r from-[#0074b7] to-[#005fa3] hover:shadow-lg text-white font-bold py-3.5 sm:py-4 text-lg rounded-xl focus:ring-2 focus:ring-blue-400 transition-all duration-200"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Registering..." : "Register"}
+                  {isLoading ? (
+                    isLongWait ? "Waking up server..." : "Registering..."
+                  ) : "Register"}
                 </Button>
                 <div className="text-center text-sm mt-4">
                   Already have an account?{' '}

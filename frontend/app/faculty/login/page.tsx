@@ -28,6 +28,18 @@ export default function FacultyLogin() {
   })
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isLongWait, setIsLongWait] = useState(false)
+
+  // Show long wait message if loading takes more than 5 seconds
+  React.useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (isLoading) {
+      timer = setTimeout(() => setIsLongWait(true), 5000)
+    } else {
+      setIsLongWait(false)
+    }
+    return () => clearTimeout(timer)
+  }, [isLoading])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
