@@ -37,6 +37,9 @@ export default function FacultyRegister() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  // Add state to track long wait times
+  const [isLongWait, setIsLongWait] = useState(false)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -90,6 +93,7 @@ export default function FacultyRegister() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {
+      clearTimeout(timeout)
       setIsLoading(false);
     }
   }

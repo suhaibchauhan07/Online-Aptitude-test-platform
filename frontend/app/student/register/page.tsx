@@ -94,7 +94,7 @@ export default function StudentRegister() {
           password: formData.password,
           className: formData.className,
           department: formData.department,
-          year: parseInt(formData.year)
+          year: formData.year ? parseInt(formData.year) : 0
         }),
       });
 
@@ -112,6 +112,7 @@ export default function StudentRegister() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {
+      clearTimeout(timeout)
       setIsLoading(false);
     }
   }
