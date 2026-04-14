@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react"
 import Link from "next/link"
-import { GraduationCap, BookOpen, Award, ArrowRight, ShieldCheck } from "lucide-react"
+import { GraduationCap, BookOpen, Award, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import API_BASE_URL from "@/app/config/api"
@@ -62,17 +62,6 @@ export default function LandingPage() {
                 >
                   <Link href="/student/login">
                     Student Login
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="border-green-500 text-green-700 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-900 transition-all text-lg focus:outline-none focus:ring-2 focus:ring-green-400 w-full sm:w-auto"
-                >
-                  <Link href="/practice">
-                    Practice Questions
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
